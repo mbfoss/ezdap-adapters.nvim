@@ -54,7 +54,7 @@ or any other plugin manager. Then:
 " one-off session: adapter, mode, and the mode's inputs as key=value
 :Ezdap run debugpy script command=./main.py
 
-" or scaffold a reusable run file for it
+" or create a reusable run file for it
 :Ezdap new_run_file debugpy script
 ```
 
