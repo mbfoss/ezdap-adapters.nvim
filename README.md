@@ -10,7 +10,7 @@ The adapter itself (`codelldb`, `lldb-dap`, `gdb`, `dlv`, …) is a separate pro
 Modes describe their own inputs, so ezdap.nvim can complete, prompt for and validate them.
 
 Because each file stands alone, you can also just copy one into your own config and skip
-the plugin. See [A single definition instead](#a-single-definition-instead).
+the plugin. See [A single definition instead](#a-single-definition-instead-).
 
 ## Requirements
 
@@ -19,8 +19,8 @@ the plugin. See [A single definition instead](#a-single-definition-instead).
   environment variable you set, `PATH`, the usual system prefixes, and a
   [mason.nvim](https://github.com/mason-org/mason.nvim) package — and the first hit wins.
   mason is never required: any of the other locations works on its own, and the search list
-  is a variable at the top of each file. See [Available adapters](#available-adapters) and
-  [Locating the adapter](#locating-the-adapter).
+  is a variable at the top of each file. See [Available adapters](#available-adapters-) and
+  [Locating the adapter](#locating-the-adapter-).
 
 ## Quick start
 
@@ -81,23 +81,23 @@ files are not updated automatically; the plugin's are.
 ## Available adapters <!-- tag: adapters -->
 
 ezdap.nvim itself ships only the generic `remote` definition; the language-specific ones are
-here. One row per definition: what it needs installed, and the modes it offers.
+here. One row per definition, with what it needs installed.
 
-| Adapter | Debugs | Needs | Modes |
-| --- | --- | --- | --- |
-| [`debugpy`](ezdap-adapters/debugpy.lua) | Python | a Python that can import [debugpy](https://github.com/microsoft/debugpy): `$DEBUGPY_VENV`, `$VIRTUAL_ENV`, a project `.venv`/`venv`/`env`, the mason venv, then `python3` / `python` | `attach`, `code`, `listen`, `module`, `remote`, `script` |
-| [`codelldb`](ezdap-adapters/codelldb.lua) | C / C++ / Rust | [`codelldb`](https://github.com/vadimcn/codelldb) on `PATH` or from mason; it bundles LLDB | `attach`, `binary`, `core`, `gdb_remote`, `process_name` |
-| [`lldb`](ezdap-adapters/lldb.lua) | C / C++ / Rust | `lldb-dap`, LLVM's own adapter, on `PATH` — from an LLVM install (a versioned `lldb-dap-21` works too), or from Xcode's toolchain, whose bin directory `xcode-select -p` names | `attach`, `binary`, `core`, `gdb_remote`, `process_name` |
-| [`gdb`](ezdap-adapters/gdb.lua) | C / C++ | [GDB](https://sourceware.org/gdb/) 14.1+ on `PATH`; its own adapter via `gdb --interpreter=dap`; `core` needs 17.3+ | `attach`, `binary`, `core`, `remote` |
-| [`delve`](ezdap-adapters/delve.lua) | Go | [`dlv`](https://github.com/go-delve/delve) on `PATH`, under `$GOBIN` / `$GOPATH/bin`, or from mason; its own adapter via `dlv dap` | `attach`, `binary`, `core`, `package`, `replay`, `test` |
-| [`netcoredbg`](ezdap-adapters/netcoredbg.lua) | .NET | [`netcoredbg`](https://github.com/Samsung/netcoredbg) on `PATH` or from mason | `attach`, `binary` |
-| [`java-debug-server`](ezdap-adapters/java-debug-server.lua) | Java | an already-running java-debug server, e.g. one started by [nvim-jdtls](https://github.com/mfussenegger/nvim-jdtls); this definition only connects to it | `attach` |
-| [`js-debug`](ezdap-adapters/js-debug.lua) | JavaScript / TypeScript | `node`, plus [js-debug](https://github.com/microsoft/vscode-js-debug)'s `dapDebugServer.js` — `$JS_DEBUG_HOME` (an unpacked release or npm install), or the mason `js-debug-adapter` package | `attach`, `browser`, `remote`, `script` |
-| [`php-debug`](ezdap-adapters/php-debug.lua) | PHP | `node`, plus [vscode-php-debug](https://github.com/xdebug/vscode-php-debug)'s `phpDebug.js` — `$PHP_DEBUG_HOME` (an unpacked .vsix), or the mason `php-debug-adapter` package; it fronts [Xdebug](https://xdebug.org/), loaded into the PHP being debugged | `listen`, `script` |
-| [`rdbg`](ezdap-adapters/rdbg.lua) | Ruby | [`rdbg`](https://github.com/ruby/debug), from the `debug` gem, on `PATH`, under `$GEM_HOME/bin` / `$GEM_ROOT/bin`, or from mason | `command`, `remote`, `script` |
-| [`dart`](ezdap-adapters/dart.lua) | Dart / Flutter | the [Dart](https://dart.dev) or [Flutter](https://flutter.dev) SDK on `PATH`, or under `$DART_SDK` / `$FLUTTER_ROOT`; the adapters ship inside the SDK | `attach`, `flutter`, `flutter_attach`, `flutter_test`, `script`, `test` |
-| [`bash-debug-adapter`](ezdap-adapters/bash-debug-adapter.lua) | Bash | `bash-debug-adapter` on `PATH` or from mason ([bash-debug](https://github.com/rogalmic/vscode-bash-debug)); it fronts bashdb, taken from `$BASHDB_HOME` (where a system install is named) or the extension's own `bashdb_dir` | `script` |
-| [`local-lua-debugger`](ezdap-adapters/local-lua-debugger.lua) | Lua | `node`, plus the unpacked [local-lua-debugger](https://github.com/tomblind/local-lua-debugger-vscode) extension — `$LOCAL_LUA_DEBUGGER_HOME`, or the mason `local-lua-debugger-vscode` package | `executable`, `script` |
+| Adapter | Debugs | Needs |
+| --- | --- | --- |
+| [`debugpy`](ezdap-adapters/debugpy.lua) | Python | a Python that can import [debugpy](https://github.com/microsoft/debugpy): `$DEBUGPY_VENV`, `$VIRTUAL_ENV`, a project `.venv`/`venv`/`env`, the mason venv, then `python3` / `python` |
+| [`codelldb`](ezdap-adapters/codelldb.lua) | C / C++ / Rust | [`codelldb`](https://github.com/vadimcn/codelldb) on `PATH` or from mason; it bundles LLDB |
+| [`lldb`](ezdap-adapters/lldb.lua) | C / C++ / Rust | `lldb-dap`, LLVM's own adapter, on `PATH` — from an LLVM install (a versioned `lldb-dap-21` works too), or from Xcode's toolchain, whose bin directory `xcode-select -p` names |
+| [`gdb`](ezdap-adapters/gdb.lua) | C / C++ | [GDB](https://sourceware.org/gdb/) 14.1+ on `PATH`; its own adapter via `gdb --interpreter=dap`; `core` needs 17.3+ |
+| [`delve`](ezdap-adapters/delve.lua) | Go | [`dlv`](https://github.com/go-delve/delve) on `PATH`, under `$GOBIN` / `$GOPATH/bin`, or from mason; its own adapter via `dlv dap` |
+| [`netcoredbg`](ezdap-adapters/netcoredbg.lua) | .NET | [`netcoredbg`](https://github.com/Samsung/netcoredbg) on `PATH` or from mason |
+| [`java-debug-server`](ezdap-adapters/java-debug-server.lua) | Java | an already-running java-debug server, e.g. one started by [nvim-jdtls](https://github.com/mfussenegger/nvim-jdtls); this definition only connects to it |
+| [`js-debug`](ezdap-adapters/js-debug.lua) | JavaScript / TypeScript | `node`, plus [js-debug](https://github.com/microsoft/vscode-js-debug)'s `dapDebugServer.js` — `$JS_DEBUG_HOME` (an unpacked release or npm install), or the mason `js-debug-adapter` package |
+| [`php-debug`](ezdap-adapters/php-debug.lua) | PHP | `node`, plus [vscode-php-debug](https://github.com/xdebug/vscode-php-debug)'s `phpDebug.js` — `$PHP_DEBUG_HOME` (an unpacked .vsix), or the mason `php-debug-adapter` package; it fronts [Xdebug](https://xdebug.org/), loaded into the PHP being debugged |
+| [`rdbg`](ezdap-adapters/rdbg.lua) | Ruby | [`rdbg`](https://github.com/ruby/debug), from the `debug` gem, on `PATH`, under `$GEM_HOME/bin` / `$GEM_ROOT/bin`, or from mason |
+| [`dart`](ezdap-adapters/dart.lua) | Dart / Flutter | the [Dart](https://dart.dev) or [Flutter](https://flutter.dev) SDK on `PATH`, or under `$DART_SDK` / `$FLUTTER_ROOT`; the adapters ship inside the SDK |
+| [`bash-debug-adapter`](ezdap-adapters/bash-debug-adapter.lua) | Bash | `bash-debug-adapter` on `PATH` or from mason ([bash-debug](https://github.com/rogalmic/vscode-bash-debug)); it fronts bashdb, taken from `$BASHDB_HOME` (where a system install is named) or the extension's own `bashdb_dir` |
+| [`local-lua-debugger`](ezdap-adapters/local-lua-debugger.lua) | Lua | `node`, plus the unpacked [local-lua-debugger](https://github.com/tomblind/local-lua-debugger-vscode) extension — `$LOCAL_LUA_DEBUGGER_HOME`, or the mason `local-lua-debugger-vscode` package |
 
 Mode names say what they do: `binary`, `script`, `package` and the other launch modes start a
 new process; `attach` / `process_name` / `remote` / `gdb_remote` / `listen` connect to a
@@ -112,7 +112,7 @@ ask ezdap.nvim instead:
 :Ezdap adapter_info debugpy script  " just that mode
 ```
 
-See [`:Ezdap adapter_info`](https://github.com/mbfoss/ezdap.nvim#ezdap-adapter_info), help
+See [`:Ezdap adapter_info`](https://github.com/mbfoss/ezdap.nvim#ezdap-adapter_info-), help
 tag |ezdap-:ezdap-adapter_info|. The same descriptions reach you while typing: completion
 after `:Ezdap run <adapter> <mode> ` lists the mode's inputs, and
 `:Ezdap new_run_file <adapter> <mode>` writes them all out, commented. A definition you copy
