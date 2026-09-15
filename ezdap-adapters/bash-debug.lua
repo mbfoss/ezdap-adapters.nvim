@@ -73,7 +73,7 @@ return {
         callback()
     end,
     modes = {
-        -- `quick_run bash-debug-adapter script script=./run.sh`.
+        -- `quick_run bash-debug script script=./run.sh`.
         script = {
             description = "debug a bash script",
             request = "launch",

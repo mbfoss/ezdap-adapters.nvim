@@ -91,12 +91,12 @@ here. One row per definition, with what it needs installed.
 | [`gdb`](ezdap-adapters/gdb.lua) | C / C++ | [GDB](https://sourceware.org/gdb/) 14.1+ on `PATH`; its own adapter via `gdb --interpreter=dap`; `core` needs 17.3+ |
 | [`delve`](ezdap-adapters/delve.lua) | Go | [`dlv`](https://github.com/go-delve/delve) on `PATH`, under `$GOBIN` / `$GOPATH/bin`, or from mason; its own adapter via `dlv dap` |
 | [`netcoredbg`](ezdap-adapters/netcoredbg.lua) | .NET | [`netcoredbg`](https://github.com/Samsung/netcoredbg) on `PATH` or from mason |
-| [`java-debug-server`](ezdap-adapters/java-debug-server.lua) | Java | an already-running java-debug server, e.g. one started by [nvim-jdtls](https://github.com/mfussenegger/nvim-jdtls); this definition only connects to it |
+| [`jdtls`](ezdap-adapters/jdtls.lua) | Java | a running [jdtls](https://github.com/eclipse-jdtls/eclipse.jdt.ls) with its java-debug server started, e.g. by [nvim-jdtls](https://github.com/mfussenegger/nvim-jdtls); this definition only connects to it |
 | [`js-debug`](ezdap-adapters/js-debug.lua) | JavaScript / TypeScript | `node`, plus [js-debug](https://github.com/microsoft/vscode-js-debug)'s `dapDebugServer.js` — `$JS_DEBUG_HOME` (an unpacked release or npm install), or the mason `js-debug-adapter` package |
 | [`php-debug`](ezdap-adapters/php-debug.lua) | PHP | `node`, plus [vscode-php-debug](https://github.com/xdebug/vscode-php-debug)'s `phpDebug.js` — `$PHP_DEBUG_HOME` (an unpacked .vsix), or the mason `php-debug-adapter` package; it fronts [Xdebug](https://xdebug.org/), loaded into the PHP being debugged |
 | [`rdbg`](ezdap-adapters/rdbg.lua) | Ruby | [`rdbg`](https://github.com/ruby/debug), from the `debug` gem, on `PATH`, under `$GEM_HOME/bin` / `$GEM_ROOT/bin`, or from mason |
 | [`dart`](ezdap-adapters/dart.lua) | Dart / Flutter | the [Dart](https://dart.dev) or [Flutter](https://flutter.dev) SDK on `PATH`, or under `$DART_SDK` / `$FLUTTER_ROOT`; the adapters ship inside the SDK |
-| [`bash-debug-adapter`](ezdap-adapters/bash-debug-adapter.lua) | Bash | `bash-debug-adapter` on `PATH` or from mason ([bash-debug](https://github.com/rogalmic/vscode-bash-debug)); it fronts bashdb, taken from `$BASHDB_HOME` (where a system install is named) or the extension's own `bashdb_dir` |
+| [`bash-debug`](ezdap-adapters/bash-debug.lua) | Bash | `bash-debug-adapter` on `PATH` or from mason ([bash-debug](https://github.com/rogalmic/vscode-bash-debug)); it fronts bashdb, taken from `$BASHDB_HOME` (where a system install is named) or the extension's own `bashdb_dir` |
 
 Mode names say what they do: `binary`, `script`, `package` and the other launch modes start a
 new process; `attach` / `process_name` / `remote` / `gdb_remote` / `listen` connect to a

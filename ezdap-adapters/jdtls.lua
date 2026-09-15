@@ -1,5 +1,6 @@
--- Java — expects an external java-debug server (e.g. started by nvim-jdtls).
--- Two distinct endpoints are in play: the DAP connection to that server, and the
+-- Java — connects to the java-debug server running inside jdtls (the
+-- com.microsoft.java.debug plugin, loaded and started e.g. by nvim-jdtls); it
+-- starts nothing itself. Two distinct endpoints are in play: the DAP connection to that server, and the
 -- debuggee JVM's JDWP address, which com.microsoft.java.debug reads from the
 -- attach body as `hostName`/`port` (not `host`).
 
@@ -22,7 +23,7 @@ return {
             },
             -- Two host/port pairs, and they are not the same connection: the body's
             -- names the JDWP port the debuggee exposes, the second return the
-            -- java-debug-server ezdap itself dials.
+            -- java-debug server ezdap itself dials.
             build = function(inputs)
                 local shared = require("ezdap.shared")
                 local jdwp_port, err = shared.resolve_port(inputs.jdwp_port)
