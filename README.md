@@ -97,7 +97,6 @@ here. One row per definition, with what it needs installed.
 | [`rdbg`](ezdap-adapters/rdbg.lua) | Ruby | [`rdbg`](https://github.com/ruby/debug), from the `debug` gem, on `PATH`, under `$GEM_HOME/bin` / `$GEM_ROOT/bin`, or from mason |
 | [`dart`](ezdap-adapters/dart.lua) | Dart / Flutter | the [Dart](https://dart.dev) or [Flutter](https://flutter.dev) SDK on `PATH`, or under `$DART_SDK` / `$FLUTTER_ROOT`; the adapters ship inside the SDK |
 | [`bash-debug-adapter`](ezdap-adapters/bash-debug-adapter.lua) | Bash | `bash-debug-adapter` on `PATH` or from mason ([bash-debug](https://github.com/rogalmic/vscode-bash-debug)); it fronts bashdb, taken from `$BASHDB_HOME` (where a system install is named) or the extension's own `bashdb_dir` |
-| [`local-lua-debugger`](ezdap-adapters/local-lua-debugger.lua) | Lua | `node`, plus the unpacked [local-lua-debugger](https://github.com/tomblind/local-lua-debugger-vscode) extension — `$LOCAL_LUA_DEBUGGER_HOME`, or the mason `local-lua-debugger-vscode` package |
 
 Mode names say what they do: `binary`, `script`, `package` and the other launch modes start a
 new process; `attach` / `process_name` / `remote` / `gdb_remote` / `listen` connect to a
@@ -125,7 +124,7 @@ variables at the top of its file, ready to be pinned or extended. With the plugi
 copy the file into `~/.config/nvim/ezdap-adapters/` and edit it there.
 
 Each file has the same two variables: a singular one (`delve_bin`, `php_debug_js`,
-`lua_debugger_dir`, …) that pins one path and skips detection entirely, and the plural list
+`bashdb_lib_dir`, …) that pins one path and skips detection entirely, and the plural list
 beside it (`delve_bins`, `php_debug_jss`, …) that is searched in order. In a list entry, a
 leading `$` names an environment variable and the entry is skipped when it is unset, `~` is
 the home directory, and a bare name with no separator is looked up on `PATH`.
@@ -143,8 +142,8 @@ For the same reason an adapter that is a plain executable gets no environment va
 its own. The variables that are there either belong to the language's own toolchain
 (`$GOBIN`, `$GOPATH`, `$GEM_HOME`, `$VIRTUAL_ENV`, `$DART_SDK`, `$FLUTTER_ROOT`) or name
 something `PATH` cannot express — a venv, a `.js` entry point, an unpacked extension
-directory (`$DEBUGPY_VENV`, `$JS_DEBUG_HOME`, `$PHP_DEBUG_HOME`, `$LOCAL_LUA_DEBUGGER_HOME`,
-`$BASHDB_HOME`, `$BASH_DEBUG_ADAPTER`).
+directory (`$DEBUGPY_VENV`, `$JS_DEBUG_HOME`, `$PHP_DEBUG_HOME`, `$BASHDB_HOME`,
+`$BASH_DEBUG_ADAPTER`).
 
 mason paths are entries in these lists like any other, so mason is entirely optional; a
 definition never requires it, and never looks at whether it is installed. Entries are literal
