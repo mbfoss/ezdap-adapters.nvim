@@ -17,9 +17,9 @@ skip the plugin; see
 ## Requirements
 
 - Neovim with [ezdap.nvim](https://github.com/mbfoss/ezdap.nvim) installed.
-- The debug adapter itself. Every definition searches several locations for it —
-  an environment variable you set, `PATH`, the usual system prefixes, and a
-  [mason.nvim](https://github.com/mason-org/mason.nvim) package — and the first
+- The debug adapter itself. Every definition searches several locations for it
+  (an environment variable you set, `PATH`, the usual system prefixes, and a
+  [mason.nvim](https://github.com/mason-org/mason.nvim) package) and the first
   hit wins. mason is never required: any of the other locations works on its
   own, and the search list is a variable at the top of each file. See
   [Available adapters](#available-adapters-) and
@@ -72,7 +72,8 @@ curl -o ~/.config/nvim/ezdap-adapters/debugpy.lua \
 ```
 
 ezdap.nvim globs `ezdap-adapters/*.lua` across the runtimepath and registers
-each file under its filename stem — `debugpy.lua` becomes the `debugpy` adapter.
+each file under its filename stem, so `debugpy.lua` becomes the `debugpy`
+adapter.
 The directory sits beside `lsp/` and `plugin/`, not under `lua/`: these are
 files read by name, not Lua modules. The plugin works the same way; it puts its
 own `ezdap-adapters/` directory on the runtimepath.
@@ -92,13 +93,13 @@ installed.
 | --- | --- | --- |
 | [`debugpy`](ezdap-adapters/debugpy.lua) | Python | a Python that can import [debugpy](https://github.com/microsoft/debugpy): `$DEBUGPY_VENV`, `$VIRTUAL_ENV`, a project `.venv`/`venv`/`env`, the mason venv, then `python3` / `python` |
 | [`codelldb`](ezdap-adapters/codelldb.lua) | C / C++ / Rust | [`codelldb`](https://github.com/vadimcn/codelldb) on `PATH` or from mason; it bundles LLDB |
-| [`lldb`](ezdap-adapters/lldb.lua) | C / C++ / Rust | `lldb-dap`, LLVM's own adapter, on `PATH` — from an LLVM install (a versioned `lldb-dap-21` works too), or from Xcode's toolchain, whose bin directory `xcode-select -p` names |
+| [`lldb`](ezdap-adapters/lldb.lua) | C / C++ / Rust | `lldb-dap`, LLVM's own adapter, on `PATH`: from an LLVM install (a versioned `lldb-dap-21` works too), or from Xcode's toolchain, whose bin directory `xcode-select -p` names |
 | [`gdb`](ezdap-adapters/gdb.lua) | C / C++ | [GDB](https://sourceware.org/gdb/) 14.1+ on `PATH`; its own adapter via `gdb --interpreter=dap`; `core` needs 17.3+ |
 | [`delve`](ezdap-adapters/delve.lua) | Go | [`dlv`](https://github.com/go-delve/delve) on `PATH`, under `$GOBIN` / `$GOPATH/bin`, or from mason; its own adapter via `dlv dap` |
 | [`netcoredbg`](ezdap-adapters/netcoredbg.lua) | .NET | [`netcoredbg`](https://github.com/Samsung/netcoredbg) on `PATH` or from mason |
 | [`jdtls`](ezdap-adapters/jdtls.lua) | Java | a running [jdtls](https://github.com/eclipse-jdtls/eclipse.jdt.ls) with its java-debug server started, e.g. by [nvim-jdtls](https://github.com/mfussenegger/nvim-jdtls); this definition only connects to it |
-| [`js-debug`](ezdap-adapters/js-debug.lua) | JavaScript / TypeScript | `node`, plus [js-debug](https://github.com/microsoft/vscode-js-debug)'s `dapDebugServer.js` — `$JS_DEBUG_HOME` (an unpacked release or npm install), or the mason `js-debug-adapter` package |
-| [`php-debug`](ezdap-adapters/php-debug.lua) | PHP | `node`, plus [vscode-php-debug](https://github.com/xdebug/vscode-php-debug)'s `phpDebug.js` — `$PHP_DEBUG_HOME` (an unpacked .vsix), or the mason `php-debug-adapter` package; it fronts [Xdebug](https://xdebug.org/), loaded into the PHP being debugged |
+| [`js-debug`](ezdap-adapters/js-debug.lua) | JavaScript / TypeScript | `node`, plus [js-debug](https://github.com/microsoft/vscode-js-debug)'s `dapDebugServer.js` from `$JS_DEBUG_HOME` (an unpacked release or npm install), or the mason `js-debug-adapter` package |
+| [`php-debug`](ezdap-adapters/php-debug.lua) | PHP | `node`, plus [vscode-php-debug](https://github.com/xdebug/vscode-php-debug)'s `phpDebug.js` from `$PHP_DEBUG_HOME` (an unpacked .vsix), or the mason `php-debug-adapter` package; it fronts [Xdebug](https://xdebug.org/), loaded into the PHP being debugged |
 | [`rdbg`](ezdap-adapters/rdbg.lua) | Ruby | [`rdbg`](https://github.com/ruby/debug), from the `debug` gem, on `PATH`, under `$GEM_HOME/bin` / `$GEM_ROOT/bin`, or from mason |
 | [`dart`](ezdap-adapters/dart.lua) | Dart / Flutter | the [Dart](https://dart.dev) or [Flutter](https://flutter.dev) SDK on `PATH`, or under `$DART_SDK` / `$FLUTTER_ROOT`; the adapters ship inside the SDK |
 | [`bash-debug`](ezdap-adapters/bash-debug.lua) | Bash | `bash-debug-adapter` on `PATH` or from mason ([bash-debug](https://github.com/rogalmic/vscode-bash-debug)); it fronts bashdb, taken from `$BASHDB_HOME` (where a system install is named) or the extension's own `bashdb_dir` |
@@ -126,8 +127,8 @@ definition you copy and edit documents itself the same way.
 
 ## Locating the adapter <!-- tag: locating -->
 
-Paths a definition resolves — the adapter executable, and anything shipped
-beside it — are variables at the top of its file, ready to be pinned or
+Paths a definition resolves (the adapter executable, and anything shipped
+beside it) are variables at the top of its file, ready to be pinned or
 extended. With the plugin installed, copy the file into
 `~/.config/nvim/ezdap-adapters/` and edit it there.
 
@@ -138,20 +139,20 @@ is searched in order. In a list entry, a leading `$` names an environment
 variable and the entry is skipped when it is unset, `~` is the home directory,
 and a bare name with no separator is looked up on `PATH`.
 
-Lists cover only what `PATH` does not. A bare `dlv` finds
-`/usr/local/bin/dlv` on its own, so the only things spelled out are what `PATH`
-cannot reach: an SDK prefix named by a toolchain variable, and mason's package
-directory. No list hardcodes an absolute or home-relative path, which keeps
-every definition working the same way on Linux, macOS and Windows. A package
-manager's prefix is not there — Homebrew, a distro package and a hand-built
-install all put the binary somewhere `PATH` reaches — and neither is any prefix
-an unpacked release might sit under: point an environment variable, or the
-file's singular variable, at wherever you put it.
+Lists cover only what `PATH` does not. A bare `dlv` finds `/usr/local/bin/dlv`
+on its own, so the only things spelled out are what `PATH` cannot reach: an SDK
+prefix named by a toolchain variable, and mason's package directory. No list
+hardcodes an absolute or home-relative path, which keeps every definition
+working the same way on Linux, macOS and Windows. A package manager's prefix is
+not there, since Homebrew, a distro package and a hand-built install all put the
+binary somewhere `PATH` reaches, and neither is any prefix an unpacked release
+might sit under: point an environment variable, or the file's singular variable,
+at wherever you put it.
 
 For the same reason an adapter that is a plain executable gets no environment
 variable of its own. The variables that are there either belong to the
 language's own toolchain (`$GOBIN`, `$GOPATH`, `$GEM_HOME`, `$VIRTUAL_ENV`,
-`$DART_SDK`, `$FLUTTER_ROOT`) or name something `PATH` cannot express — a venv,
+`$DART_SDK`, `$FLUTTER_ROOT`) or name something `PATH` cannot express: a venv,
 a `.js` entry point, an unpacked extension directory (`$DEBUGPY_VENV`,
 `$JS_DEBUG_HOME`, `$PHP_DEBUG_HOME`, `$BASHDB_HOME`, `$BASH_DEBUG_ADAPTER`).
 
