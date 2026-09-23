@@ -1,4 +1,4 @@
--- JavaScript / TypeScript — starts js-debug's TCP server, then connects to it.
+-- JavaScript / TypeScript - starts js-debug's TCP server, then connects to it.
 -- Fields follow vscode-js-debug's options documentation
 -- (https://github.com/microsoft/vscode-js-debug/blob/main/OPTIONS.md). js-debug
 -- picks the debuggee's console via `console`, not runInTerminal.
@@ -87,7 +87,7 @@ end
 local _modes = {
     -- One `command` input carries the whole command line; `build` splits it into
     -- `program` (the first word) and `args` (the rest). The runtime is not part of
-    -- it — `command` starts at the script, and `runtime_executable` names the runtime.
+    -- it - `command` starts at the script, and `runtime_executable` names the runtime.
     script = {
         description = "debug a Node.js/JS/TS file",
         request = "launch",

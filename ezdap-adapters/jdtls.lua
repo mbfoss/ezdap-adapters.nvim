@@ -1,4 +1,4 @@
--- Java — connects to the java-debug server running inside jdtls (the
+-- Java - connects to the java-debug server running inside jdtls (the
 -- com.microsoft.java.debug plugin, loaded and started e.g. by nvim-jdtls); it
 -- starts nothing itself. Two distinct endpoints are in play: the DAP connection to that server, and the
 -- debuggee JVM's JDWP address, which com.microsoft.java.debug reads from the

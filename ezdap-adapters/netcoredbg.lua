@@ -1,7 +1,7 @@
 -- netcoredbg has no options document; the authoritative field set is the keys its
 -- VS Code protocol handler reads, in Samsung/netcoredbg's
 -- src/protocols/vscodeprotocol.cpp ("launch" and "attach" handlers). That set is
--- small and complete as written below — launch takes seven keys, attach only
+-- small and complete as written below - launch takes seven keys, attach only
 -- `processId`. netcoredbg spells entry-stop `stopAtEntry`, not the standard
 -- `stopOnEntry`, and has no runInTerminal/console argument.
 
@@ -12,7 +12,7 @@ local netcoredbg_bin = nil ---@type string?
 -- Where to look for netcoredbg, in order. A leading "$" names an environment
 -- variable, skipped when unset; "~" expands to the home directory. A bare name
 -- (no separator) is looked up on $PATH, which is where an unpacked release is
--- picked up from — put its directory on $PATH, or set `netcoredbg_bin`. Mason
+-- picked up from - put its directory on $PATH, or set `netcoredbg_bin`. Mason
 -- ships a shim in its `bin`, which is on $PATH only when mason.nvim was set up to
 -- put it there, so the binary inside the package is listed too; mason itself is
 -- not required.
@@ -29,7 +29,7 @@ local netcoredbg_args = { "--interpreter=vscode" }
 ---@type ezdap.AdapterDef
 return {
     command = vim.list_extend({ netcoredbg_bin or netcoredbg_bins[1] }, netcoredbg_args),
-    -- Nothing to spawn — netcoredbg speaks DAP over stdio — but a missing binary
+    -- Nothing to spawn - netcoredbg speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at whatever
     -- it finds.
@@ -77,7 +77,7 @@ return {
                 }
             end,
         },
-        -- The attach handler reads `processId` alone — the launch-side options are
+        -- The attach handler reads `processId` alone - the launch-side options are
         -- not consulted here, so none are offered.
         attach = {
             description = "attach to a running process by pid",

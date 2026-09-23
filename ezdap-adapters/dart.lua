@@ -1,4 +1,4 @@
--- Dart / Flutter — the debug adapters built into the SDKs themselves, so there
+-- Dart / Flutter - the debug adapters built into the SDKs themselves, so there
 -- is nothing to install beyond the SDK: `dart debug_adapter` and
 -- `flutter debug_adapter`, each with a `--test` variant that runs the project's
 -- tests and reports their progress. Which of the four a run uses is decided by
@@ -9,7 +9,7 @@
 -- (pkg/dap_adapters/lib/src/adapters/dart.dart), and FlutterLaunchRequestArguments
 -- and FlutterAttachRequestArguments in flutter_tools
 -- (lib/src/debug_adapters/flutter_adapter_args.dart). The Flutter adapter shares
--- the common half and defines its own launch/attach fields — no console, no VM
+-- the common half and defines its own launch/attach fields - no console, no VM
 -- arguments; the flutter tool is configured through `tool_args` instead.
 
 -- Set to a path to skip detection entirely; otherwise the first candidate below
@@ -65,7 +65,7 @@ local _common_inputs = {
 }
 
 ---Fields for running the tool itself, rather than the program it runs. Every
----mode whose adapter shells out to `dart`/`flutter` accepts them — including
+---mode whose adapter shells out to `dart`/`flutter` accepts them - including
 ---the Flutter attach, which runs the flutter tool to reach the device.
 ---@type table<string, ezdap.Input>
 local _tool_inputs = {
@@ -122,8 +122,8 @@ end
 
 ---The launch half shared by Dart and Flutter: one `command` input carries the
 ---whole command line, split into `program` (the entry point) and `args` (what it
----is run with). Flutter leaves `program` optional — without one the tool runs the
----project's own entry point — so an unset command assigns nothing rather than an
+---is run with). Flutter leaves `program` optional - without one the tool runs the
+---project's own entry point - so an unset command assigns nothing rather than an
 ---empty program.
 ---@param inputs table<string, any>
 ---@return table params
@@ -242,7 +242,7 @@ local _modes = {
 ---@type ezdap.AdapterDef
 return {
     command = { dart_bin or dart_bins[1], dap_subcommand },
-    -- Nothing to spawn — every one of these adapters speaks DAP over stdio — but
+    -- Nothing to spawn - every one of these adapters speaks DAP over stdio - but
     -- which tool to run is the mode's answer, not the def's, and a missing SDK
     -- fails the session with no legible reason. Both are settled here, where a
     -- plain error string reaches the user.

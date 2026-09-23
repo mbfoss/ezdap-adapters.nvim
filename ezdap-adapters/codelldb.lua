@@ -1,4 +1,4 @@
--- codelldb — the CodeLLDB VS Code extension's adapter binary. Field set follows
+-- codelldb - the CodeLLDB VS Code extension's adapter binary. Field set follows
 -- vadimcn/codelldb's launch.json attributes
 -- (https://github.com/vadimcn/codelldb/blob/master/MANUAL.md). `type` is always
 -- "lldb"; `name` is a display label.
@@ -10,7 +10,7 @@ local codelldb_bin = nil ---@type string?
 -- Where to look for the adapter binary, in order. A leading "$" names an
 -- environment variable, skipped when unset; "~" expands to the home directory. A
 -- bare name (no separator) is looked up on $PATH, which is where an unpacked
--- release or a distro package is picked up from — put its adapter directory on
+-- release or a distro package is picked up from - put its adapter directory on
 -- $PATH, or set `codelldb_bin` to the binary. Mason ships a shim in its `bin`,
 -- which is on $PATH only when mason.nvim was set up to put it there, so the
 -- binary inside the package is listed too; mason itself is not required.
@@ -77,7 +77,7 @@ end
 ---@type ezdap.AdapterDef
 return {
     command = codelldb_bin or codelldb_bins[1],
-    -- Nothing to spawn — codelldb speaks DAP over stdio — but a missing binary
+    -- Nothing to spawn - codelldb speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at what it
     -- finds.
@@ -161,7 +161,7 @@ return {
         -- A custom launch drives LLDB by command rather than by `program`, so both
         -- inputs land inside a command string instead of a field of their own. One
         -- `target create` opens the core: it *is* the target, so there is no process
-        -- to create afterwards — an empty `processCreateCommands` keeps codelldb from
+        -- to create afterwards - an empty `processCreateCommands` keeps codelldb from
         -- falling back to `process launch` and running the program for real.
         core = {
             description = "post-mortem debug from a core file (custom launch)",

@@ -1,4 +1,4 @@
--- PHP / Xdebug — https://github.com/xdebug/vscode-php-debug
+-- PHP / Xdebug - https://github.com/xdebug/vscode-php-debug
 -- Fields follow the `php` configurationAttributes in that extension's
 -- package.json. Upstream declares a `launch` request only, and no `attach`: the
 -- adapter never dials the debuggee, it *listens* for Xdebug to connect back to
@@ -10,7 +10,7 @@ local php_debug_js = nil ---@type string?
 
 -- Where to look for the adapter's js entry point, in order. A leading "$" names
 -- an environment variable, skipped when unset; "~" expands to the home
--- directory. Mason is only one of the entries and not required — unpack the
+-- directory. Mason is only one of the entries and not required - unpack the
 -- .vsix anywhere and point $PHP_DEBUG_HOME at it, either at the extension root
 -- or at the directory above it. Entries are literal paths, so a VS Code install,
 -- which carries a version suffix, needs that directory named here, or
@@ -26,14 +26,14 @@ local php_debug_jss = {
 local node_bin = nil ---@type string?
 local node_bins = { "node" }
 
----Attributes both modes accept — everything that configures the DBGP side of
+---Attributes both modes accept - everything that configures the DBGP side of
 ---the session, which is the same whether the debuggee was started here or
 ---connects on its own. Declared once and merged into every mode, so a field
 ---is described in one place.
 ---@type table<string, ezdap.Input>
 local _common_inputs = {
     port               = { type = "integer", description = "port to listen for Xdebug on (default 9003)" },
-    hostname           = { type = "string", description = "address to bind while listening (default :: — every interface)" },
+    hostname           = { type = "string", description = "address to bind while listening (default :: - every interface)" },
     path_mappings      = { type = "map", completion = "dir", description = "source path mappings, server=local" },
     stop_on_entry      = { type = "boolean", description = "break at the first line" },
     ignore             = { type = "list", description = "globs whose errors are ignored (default **/vendor/**/*.php)" },
@@ -58,7 +58,7 @@ local function _inputs(extra)
 end
 
 ---Both ports are held to their range here, so every mode's `build` reports a bad
----one the same way — the `nil, err` pair an abort returns.
+---one the same way - the `nil, err` pair an abort returns.
 ---@param inputs table<string, any>
 ---@return table? params, string? err
 local function _common_body(inputs)
@@ -81,7 +81,7 @@ local function _common_body(inputs)
     params.xdebugCloudToken = inputs.xdebug_cloud_token
     params.log              = inputs.log
     -- `stream` and `proxy` are nested objects upstream; they are offered as flat
-    -- inputs and assembled here. Naming any proxy field is what turns it on —
+    -- inputs and assembled here. Naming any proxy field is what turns it on -
     -- there is no separate switch to forget.
     if inputs.stream_stdout then
         params.stream = { stdout = inputs.stream_stdout }
@@ -102,7 +102,7 @@ local _modes = {
     -- The usual PHP session: nothing is started here, the adapter just holds the
     -- port open and the next request Xdebug is enabled for connects back to it.
     -- Nothing beyond the common inputs applies, since there is no process to
-    -- configure — `path_mappings` is what makes breakpoints land when the
+    -- configure - `path_mappings` is what makes breakpoints land when the
     -- debuggee runs in a container or on another host.
     listen = {
         description = "wait for Xdebug to connect back on a port",
@@ -116,7 +116,7 @@ local _modes = {
     },
     -- One `command` input carries the whole command line; `build` splits it into
     -- `program` (the first word) and `args` (the rest). The php binary is not part
-    -- of it — `command` starts at the script, and `runtime_executable` names php.
+    -- of it - `command` starts at the script, and `runtime_executable` names php.
     -- Xdebug still has to be told to start a session for this run, which is what
     -- `runtime_args` is for; without it the script runs to completion undebugged.
     script = {
@@ -161,7 +161,7 @@ end
 ---@type ezdap.AdapterDef
 return {
     command = { node_bin or node_bins[1], php_debug_js or _first_literal(php_debug_jss) },
-    -- Nothing to spawn — the adapter speaks DAP over stdio — but it is a js file
+    -- Nothing to spawn - the adapter speaks DAP over stdio - but it is a js file
     -- rather than a binary on $PATH, so both halves are located here, where a
     -- plain error string reaches the user: the node that runs it, and the file
     -- itself.

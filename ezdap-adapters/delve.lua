@@ -1,6 +1,6 @@
 -- https://github.com/go-delve/delve/blob/master/Documentation/api/dap/README.md
 
--- Go — `dlv dap` is a TCP DAP server, not a stdio adapter: it prints
+-- Go - `dlv dap` is a TCP DAP server, not a stdio adapter: it prints
 -- "DAP server listening at: <host>:<port>" and expects a TCP connection, so
 -- `_setup` spawns it, parses that line and points the connection there.
 

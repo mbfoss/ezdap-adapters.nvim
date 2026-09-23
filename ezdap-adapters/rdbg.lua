@@ -1,9 +1,9 @@
--- Ruby — https://github.com/ruby/debug (the `debug` gem, driven by `rdbg`)
+-- Ruby - https://github.com/ruby/debug (the `debug` gem, driven by `rdbg`)
 --
 -- `rdbg --open --port N` is a TCP DAP server, not a stdio adapter, and it starts
 -- the debuggee itself: the program is already loaded and stopped by the time a
--- client connects. So the request body names no program — the command line does
--- — and every mode is a DAP `attach`, which is the request the gem reads
+-- client connects. So the request body names no program - the command line does
+-- - and every mode is a DAP `attach`, which is the request the gem reads
 -- `nonstop` from (a `launch` forces nonstop, and could never stop at entry). The
 -- keys the gem's DAP server actually reads are `localfs`, `localfsMap` and
 -- `nonstop`; see `process_request` in lib/debug/server_dap.rb.
@@ -40,7 +40,7 @@ local function _free_port()
     return addr.port
 end
 
----Where a mode's `build` leaves what `setup` needs — the command line to
+---Where a mode's `build` leaves what `setup` needs - the command line to
 ---start, or the endpoint to dial. Nothing here belongs in the request body: it
 ---describes how the session is *reached*, which is settled before the body is
 ---sent, so `setup` consumes the key and drops it.
@@ -201,10 +201,10 @@ local _modes = {
         end,
     },
     -- The same thing in rdbg's command mode, for the case the script form cannot
-    -- express: a program on $PATH rather than a .rb file — `rspec spec/foo_spec.rb`,
+    -- express: a program on $PATH rather than a .rb file - `rspec spec/foo_spec.rb`,
     -- `rake test`, `ruby -Itest test/foo_test.rb`.
     command = {
-        description = "debug a Ruby command — rspec, rake, ruby itself",
+        description = "debug a Ruby command - rspec, rake, ruby itself",
         request = "attach",
         inputs = _inputs(_spawn_inputs, {
             command = { type = "string", completion = "command", required = true, description = "command to debug, plus its arguments" },
@@ -235,7 +235,7 @@ local _modes = {
             local path_mappings = inputs.path_mappings and vim.tbl_map(shared.normalize_path, inputs.path_mappings)
             if path_mappings then
                 -- The gem takes one string of "remote:local" pairs and matches by
-                -- prefix, first hit winning, so the longest prefix goes first —
+                -- prefix, first hit winning, so the longest prefix goes first -
                 -- otherwise a mapping for a parent directory shadows its children.
                 local remotes = vim.tbl_keys(path_mappings)
                 table.sort(remotes, function(a, b) return #a > #b end)
@@ -267,7 +267,7 @@ return {
         local args = config.request_args
         if not args or not args[RDBG_KEY] then
             return callback(
-                "rdbg: nothing to connect to — run one of its modes " ..
+                "rdbg: nothing to connect to - run one of its modes " ..
                 "(script, command, remote), which say how to reach the debuggee")
         end
         local spec = args[RDBG_KEY]

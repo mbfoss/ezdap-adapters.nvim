@@ -55,7 +55,7 @@ end
 ---@type ezdap.AdapterDef
 return {
     command  = bash_debug_bin or bash_debug_bins[1],
-    -- Nothing to spawn — the adapter speaks DAP over stdio — but a missing binary
+    -- Nothing to spawn - the adapter speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at what it
     -- finds.
