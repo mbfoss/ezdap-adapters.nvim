@@ -78,8 +78,7 @@ local function _debugpy_setup(config, ctx, callback)
     local handle = shared.spawn(
         { python, "-m", "debugpy.adapter", "--host", "127.0.0.1", "--port", tostring(port) },
         {
-            bufname = shared.unique_buf_name("ezdap://" ..
-            (config.name or config.adapter or "debug") .. "_debugpy-adapter"),
+            bufname = ctx.make_buf_name("server"),
             cwd     = config.cwd or vim.fn.getcwd(),
             on_exit = function() done("debugpy adapter exited unexpectedly") end,
         }

@@ -201,7 +201,7 @@ return {
         end
         local handle
         handle = shared.spawn({ node, server_js }, {
-            bufname = shared.unique_buf_name("ezdap://" .. (config.name or config.adapter or "debug") .. "_js-debug-server"),
+            bufname = ctx.make_buf_name("server"),
             on_stdout = function(_, data)
                 if resolved_port then return end
                 for _, line in ipairs(data) do

@@ -46,7 +46,7 @@ local function _setup(config, ctx, callback)
         callback(err, state)
     end
     handle = shared.spawn(cmd, {
-        bufname   = shared.unique_buf_name("ezdap://" .. (config.name or config.adapter or "debug") .. "_dlv-dap"),
+        bufname   = ctx.make_buf_name("server"),
         cwd       = config.cwd or vim.fn.getcwd(),
         env       = config.env,
         on_stdout = function(_, data)

@@ -85,8 +85,7 @@ local function _spawn_rdbg(spec, config, ctx, callback)
         callback(err, state)
     end
     handle = shared.spawn(cmd, {
-        bufname       = shared.unique_buf_name("ezdap://" ..
-            (config.name or config.adapter or "debug") .. "_rdbg"),
+        bufname       = ctx.make_buf_name("server"),
         cwd           = spec.cwd or config.cwd or vim.fn.getcwd(),
         env           = spec.env,
         -- The announcement shares a pty with the debuggee's own output, so only
