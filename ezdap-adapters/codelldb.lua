@@ -72,21 +72,14 @@ end
 
 ---@type ezdap.AdapterDef
 return {
-    -- Nothing to spawn - codelldb speaks DAP over stdio - but a missing binary
-    -- fails the session with no legible reason, so the lookup happens here, where
-    -- a plain error string reaches the user, and the config is pointed at what it
-    -- finds.
     setup = function(config, _, callback)
         local shared = require("ezdap.shared")
-        local from_config = (type(config.command) == "table" and config.command or { config.command }) --[[@as string[] ]]
-        local candidates = vim.list_extend({ from_config[1] }, codelldb_bins)
-        local exe, tried = shared.resolve_path(candidates, shared.is_executable)
+        local exe, tried = shared.resolve_path(codelldb_bins, shared.is_executable)
         if not exe then
             return callback("codelldb not found (unpack its .vsix or release, or install it via mason); tried " ..
                 table.concat(tried, ", "))
         end
-        -- Keep any flags the config carries past the binary.
-        config.command = #from_config > 1 and vim.list_extend({ exe }, vim.list_slice(from_config, 2)) or exe
+        config.command = exe
         callback()
     end,
     modes = {

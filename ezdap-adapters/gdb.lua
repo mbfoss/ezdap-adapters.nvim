@@ -1,10 +1,10 @@
 -- https://sourceware.org/gdb/current/onlinedocs/gdb.html/Debugger-Adapter-Protocol.html
 
--- Where to look for gdb, in order; the config's gdb is tried first, then these,
--- and the first one new enough for DAP wins. Put your own path first to pin it.
--- A leading "$" names an environment variable, skipped when unset; "~" expands
--- to the home directory. A bare name (no separator) is looked up on $PATH - a
--- good place to add a cross-toolchain gdb such as "arm-none-eabi-gdb".
+-- Where to look for gdb, in order; the first one new enough for DAP wins. Put
+-- your own path first to pin it. A leading "$" names an environment variable,
+-- skipped when unset; "~" expands to the home directory. A bare name (no
+-- separator) is looked up on $PATH - a good place to add a cross-toolchain gdb
+-- such as "arm-none-eabi-gdb".
 local gdb_bins = {
     "gdb",
     "gdb-multiarch",
@@ -13,8 +13,6 @@ local gdb_bins = {
 -- Flags gdb is started with, after the binary. `--interpreter=dap` is what makes
 -- it speak DAP at all.
 local gdb_args = { "--interpreter=dap" }
-
-local GDB = gdb_bins[1]
 
 -- `coreFile` is a post-17.2 addition to gdb's DAP attach: an older gdb drops it
 -- and fails the attach with the unhelpful "attach requires either 'pid' or
@@ -61,26 +59,15 @@ end
 ---@return string
 local function _fmt(v) return ("%d.%d"):format(v[1], v[2]) end
 
----The gdb a config runs, which may not be the `gdb` on $PATH this adapter defaults to.
----@param config ezdap.dap.Config
----@return string
-local function _gdb_of(config)
-    local cmd = config.command
-    return (type(cmd) == "table" and cmd[1] or cmd --[[@as string]]) or GDB
-end
-
----The first gdb that exists and is new enough to speak DAP: `preferred` (the one
----the config names) before the candidate list, so an explicit choice still wins.
+---The first gdb that exists and is new enough to speak DAP.
 ---Versions are cached, so the accepted one is re-read for free by the caller.
----@param preferred string
 ---@return string? exe, string? err
-local function _resolve_gdb(preferred)
+local function _resolve_gdb()
     local shared = require("ezdap.shared")
-    local candidates = vim.list_extend({ preferred }, gdb_bins)
     -- The reason the *first* candidate was turned down, which is the one worth
     -- reporting: it is the gdb the run asked for.
     local first_err = nil
-    local exe, tried = shared.resolve_path(candidates, function(cand)
+    local exe, tried = shared.resolve_path(gdb_bins, function(cand)
         local version, err = _gdb_version(cand)
         if version and _cmp(version, DAP_MIN) >= 0 then return true end
         first_err = first_err or err or
@@ -96,19 +83,12 @@ end
 return {
     -- Nothing to spawn - gdb speaks DAP over stdio - but a gdb that cannot do what
     -- the run asks of it fails in ways the session never surfaces legibly, so both
-    -- version gates live here, where a plain error string reaches the user. This is
-    -- also the only place that sees the gdb the run actually uses: `config.command`,
-    -- which a user may have pointed at a gdb other than the one on $PATH.
+    -- version gates live here, where a plain error string reaches the user.
     setup = function(config, ctx, callback)
-        local exe, err = _resolve_gdb(_gdb_of(config))
+        local exe, err = _resolve_gdb()
         if not exe then return callback(err) end
         local version = _gdb_version(exe) --[[@as integer[] ]]
-        -- Point the session at the gdb that was picked, keeping any flags the
-        -- config carries past the binary.
-        local flags = type(config.command) == "table" and #config.command > 1
-            and vim.list_slice(config.command --[[@as string[] ]], 2)
-            or vim.deepcopy(gdb_args)
-        config.command = vim.list_extend({ exe }, flags)
+        config.command = vim.list_extend({ exe }, gdb_args)
         -- A raw task names no mode, so it is on its own here: nothing to gate on.
         if ctx.mode == "core" and _cmp(version, CORE_MIN) <= 0 then
             return callback(("%s is gdb %s; core files need %s or newer")

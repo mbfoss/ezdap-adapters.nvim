@@ -18,12 +18,10 @@ local delve_bins = {
 local delve_args = { "dap" }
 
 ---The first candidate that is executable.
----@param extra? string an additional candidate tried last (e.g. from the config)
 ---@return string? dlv, string[] tried
-local function _resolve_dlv(extra)
+local function _resolve_dlv()
     local shared = require("ezdap.shared")
-    local candidates = vim.list_extend(vim.deepcopy(delve_bins), extra and { extra } or {})
-    return shared.resolve_path(candidates, shared.is_executable)
+    return shared.resolve_path(delve_bins, shared.is_executable)
 end
 
 ---Start `dlv dap`, wait for its "DAP server listening at: host:port" line, and
@@ -33,15 +31,12 @@ end
 ---@param callback fun(err?: string, state?: any)
 local function _setup(config, ctx, callback)
     local shared = require("ezdap.shared")
-    -- A config `command` supplies its own binary and flags; anything it leaves
-    -- out falls back to the candidates and args above.
-    local from_config = (type(config.command) == "table" and config.command or { config.command }) --[[@as string[] ]]
-    local dlv, tried  = _resolve_dlv(type(from_config[1]) == "string" and from_config[1] or nil)
+    local dlv, tried = _resolve_dlv()
     if not dlv then
         return callback("dlv not found (install delve, e.g. via mason); tried " .. table.concat(tried, ", "))
     end
     local cmd = { dlv }
-    vim.list_extend(cmd, #from_config > 1 and vim.list_slice(from_config, 2) or delve_args)
+    vim.list_extend(cmd, delve_args)
     local resolved = false
     local called   = false
     local handle

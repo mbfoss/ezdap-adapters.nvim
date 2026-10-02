@@ -53,15 +53,13 @@ end
 ---@param callback fun(err?: string, state?: any)
 local function _debugpy_setup(config, ctx, callback)
     local shared = require("ezdap.shared")
-    -- Venvs first, then bare interpreters, then whatever the config named: the
-    -- first one debugpy actually imports under wins, so no venv is required.
+    -- Venvs first, then bare interpreters: the first one debugpy actually imports
+    -- under wins, so no venv is required.
     local cwd = config.cwd or vim.fn.getcwd()
     local python, venv_tried = shared.resolve_path(debugpy_venv_dirs, _has_debugpy,
         { cwd = cwd, transform = _venv_python })
     if not python then
         local bare = vim.deepcopy(debugpy_pythons)
-        local from_config = type(config.command) == "table" and config.command[1] or config.command
-        if type(from_config) == "string" then table.insert(bare, from_config) end
         local bare_tried
         python, bare_tried = shared.resolve_path(bare, _has_debugpy)
         if not python then

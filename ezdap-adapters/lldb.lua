@@ -19,15 +19,12 @@ return {
     -- finds.
     setup    = function(config, _, callback)
         local shared = require("ezdap.shared")
-        local from_config = (type(config.command) == "table" and config.command or { config.command }) --[[@as string[] ]]
-        local candidates = vim.list_extend({ from_config[1] }, lldb_dap_bins)
-        local exe, tried = shared.resolve_path(candidates, shared.is_executable)
+        local exe, tried = shared.resolve_path(lldb_dap_bins, shared.is_executable)
         if not exe then
             return callback("lldb-dap not found (install LLVM, or Xcode's command line tools); tried " ..
                 table.concat(tried, ", "))
         end
-        -- Keep any flags the config carries past the binary.
-        config.command = #from_config > 1 and vim.list_extend({ exe }, vim.list_slice(from_config, 2)) or exe
+        config.command = exe
         callback()
     end,
     modes = {

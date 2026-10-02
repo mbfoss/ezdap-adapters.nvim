@@ -54,14 +54,12 @@ return {
     -- finds.
     setup    = function(config, _, callback)
         local shared = require("ezdap.shared")
-        local from_config = (type(config.command) == "table" and config.command or { config.command }) --[[@as string[] ]]
-        local candidates = vim.list_extend({ from_config[1] }, bash_debug_bins)
-        local exe, tried = shared.resolve_path(candidates, shared.is_executable)
+        local exe, tried = shared.resolve_path(bash_debug_bins, shared.is_executable)
         if not exe then
             return callback("bash-debug-adapter not found (install it from npm, a distro package, or mason); tried " ..
                 table.concat(tried, ", "))
         end
-        config.command = #from_config > 1 and vim.list_extend({ exe }, vim.list_slice(from_config, 2)) or exe
+        config.command = exe
         callback()
     end,
     modes = {
