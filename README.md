@@ -54,8 +54,8 @@ or any other plugin manager. Then:
 " what an adapter takes: its modes, and each mode's inputs
 :Ezdap adapter_info debugpy
 
-" one-off session: adapter, mode, and the mode's inputs as key=value
-:Ezdap run debugpy script command=./main.py
+" one-off session: adapter, mode, and the mode's inputs as --name value
+:Ezdap run debugpy script --command ./main.py
 
 " or create a reusable run file for it
 :Ezdap new_run_file debugpy script
@@ -121,9 +121,9 @@ inputs, so ask ezdap.nvim instead:
 See [`:Ezdap
 adapter_info`](https://github.com/mbfoss/ezdap.nvim#ezdap-adapter_info-), help
 tag |ezdap-:ezdap-adapter_info|. The same descriptions reach you while typing:
-completion after `:Ezdap run <adapter> <mode> ` lists the mode's inputs, and
-`:Ezdap new_run_file <adapter> <mode>` writes them all out, commented. A
-definition you copy and edit documents itself the same way.
+completion after `:Ezdap run <adapter> <mode> ` lists the mode's inputs as
+`--name`, and `:Ezdap new_run_file <adapter> <mode>` writes them all out,
+commented. A definition you copy and edit documents itself the same way.
 
 ## Locating the adapter <!-- tag: locating -->
 
