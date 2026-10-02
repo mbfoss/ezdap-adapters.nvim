@@ -239,7 +239,6 @@ local _modes = {
 
 ---@type ezdap.AdapterDef
 return {
-    command = { dart_bins[1], dap_subcommand },
     -- Nothing to spawn - every one of these adapters speaks DAP over stdio - but
     -- which tool to run is the mode's answer, not the def's, and a missing SDK
     -- fails the session with no legible reason. Both are settled here, where a

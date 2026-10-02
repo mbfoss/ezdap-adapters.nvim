@@ -25,7 +25,6 @@ local netcoredbg_args = { "--interpreter=vscode" }
 
 ---@type ezdap.AdapterDef
 return {
-    command = vim.list_extend({ netcoredbg_bins[1] }, netcoredbg_args),
     -- Nothing to spawn - netcoredbg speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at whatever

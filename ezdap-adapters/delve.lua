@@ -175,9 +175,6 @@ end
 
 ---@type ezdap.AdapterDef
 return {
-    -- The literal default; `_setup` re-resolves the binary in case it is not on
-    -- $PATH, and keeps any flags a config appended here.
-    command  = vim.list_extend({ delve_bins[1] }, delve_args),
     setup    = _setup,
     teardown = function(_, ctx) if ctx and ctx.handle then ctx.handle.stop() end end,
     modes = {

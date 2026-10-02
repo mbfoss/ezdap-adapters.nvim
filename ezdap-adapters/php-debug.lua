@@ -142,20 +142,8 @@ local _modes = {
     },
 }
 
----The candidate a pre-`setup` default is built from: the first literal entry, so
----the placeholder never shows an unexpanded "$VAR". `setup` resolves the real one.
----@param candidates string[]
----@return string
-local function _first_literal(candidates)
-    for _, cand in ipairs(candidates) do
-        if not cand:match("^%$") then return cand end
-    end
-    return candidates[1]
-end
-
 ---@type ezdap.AdapterDef
 return {
-    command = { node_bins[1], _first_literal(php_debug_jss) },
     -- Nothing to spawn - the adapter speaks DAP over stdio - but it is a js file
     -- rather than a binary on $PATH, so both halves are located here, where a
     -- plain error string reaches the user: the node that runs it, and the file

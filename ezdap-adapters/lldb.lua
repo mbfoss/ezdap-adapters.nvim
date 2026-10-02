@@ -13,7 +13,6 @@ local lldb_dap_bins = { "lldb-dap" }
 
 ---@type ezdap.AdapterDef
 return {
-    command  = lldb_dap_bins[1],
     -- Nothing to spawn - lldb-dap speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at what it

@@ -94,7 +94,6 @@ end
 
 ---@type ezdap.AdapterDef
 return {
-    command = vim.list_extend({ GDB }, gdb_args),
     -- Nothing to spawn - gdb speaks DAP over stdio - but a gdb that cannot do what
     -- the run asks of it fails in ways the session never surfaces legibly, so both
     -- version gates live here, where a plain error string reaches the user. This is

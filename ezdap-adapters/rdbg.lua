@@ -249,11 +249,6 @@ local _modes = {
 
 ---@type ezdap.AdapterDef
 return {
-    -- The literal default, never run as a stdio adapter: a config with a port
-    -- connects instead, and `setup` always sets one. It is here so `:checkhealth
-    -- ezdap` has an executable to look for, and `setup` re-resolves it in case it
-    -- is not on $PATH.
-    command = rdbg_bins[1],
     -- The endpoint is not known until `setup` has either started a server or been
     -- told where an existing one is. Because this adapter has a `setup`, a task's
     -- own host/port are left to it rather than applied by the runner, so `remote`

@@ -170,7 +170,6 @@ end
 -- adapter's port is chosen by `_debugpy_setup`, which also spawns it).
 ---@type ezdap.AdapterDef
 return {
-    command  = "python3",
     setup    = _debugpy_setup,
     teardown = function(_, ctx) if ctx then ctx.handle.stop() end end,
     modes = {

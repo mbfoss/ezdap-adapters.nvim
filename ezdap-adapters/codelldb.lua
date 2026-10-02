@@ -72,7 +72,6 @@ end
 
 ---@type ezdap.AdapterDef
 return {
-    command = codelldb_bins[1],
     -- Nothing to spawn - codelldb speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at what it
