@@ -1,26 +1,21 @@
--- Set to a directory to skip detection entirely; otherwise the first candidate
--- below that holds a `bashdb` script wins.
-local bashdb_lib_dir = nil ---@type string?
-
--- Directories that may hold the bashdb library, in order. A leading "$" names an
--- environment variable, skipped when unset; "~" expands to the home directory.
--- Mason is only one of the entries and not required: the extension ships the
--- same `bashdb_dir` inside its .vsix, which $BASH_DEBUG_ADAPTER can point at,
--- and a system bashdb install is named through $BASHDB_HOME.
+-- Directories that may hold the bashdb library, in order; the first one that
+-- holds a `bashdb` script wins. Put your own directory first to pin it. A
+-- leading "$" names an environment variable, skipped when unset; "~" expands to
+-- the home directory. Mason is only one of the entries and not required: the
+-- extension ships the same `bashdb_dir` inside its .vsix, which
+-- $BASH_DEBUG_ADAPTER can point at, and a system bashdb install is named through
+-- $BASHDB_HOME.
 local bashdb_lib_dirs = {
     "$BASHDB_HOME",
     "$BASH_DEBUG_ADAPTER/extension/bashdb_dir",
     vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "packages", "bash-debug-adapter", "extension", "bashdb_dir"),
 }
 
--- Set to the adapter executable to skip detection entirely; otherwise the first
--- candidate below that is executable wins.
-local bash_debug_bin = nil ---@type string?
-
--- Where to look for the adapter, in order. A bare name (no separator) is looked
--- up on $PATH, which is where an npm or distro install is picked up from; mason's
--- shim is on $PATH only when mason.nvim was set up to put it there, so the binary
--- inside the package is listed too; mason itself is not required.
+-- Where to look for the adapter, in order; the first executable wins. Put your
+-- own path first to pin it. A bare name (no separator) is looked up on $PATH,
+-- which is where an npm or distro install is picked up from; mason's shim is on
+-- $PATH only when mason.nvim was set up to put it there, so the binary inside
+-- the package is listed too; mason itself is not required.
 local bash_debug_bins = {
     "bash-debug-adapter",
     vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "bin", "bash-debug-adapter"),
@@ -36,10 +31,9 @@ local bash_tools = {
     pkill  = "pkill",
 }
 
----The configured bashdb library directory, or the first candidate that exists.
+---The first candidate that is a directory.
 ---@return string?
 local function _resolve_lib_dir()
-    if bashdb_lib_dir then return bashdb_lib_dir end
     local shared = require("ezdap.shared")
     return (shared.resolve_path(bashdb_lib_dirs, shared.is_directory))
 end
@@ -54,7 +48,7 @@ end
 
 ---@type ezdap.AdapterDef
 return {
-    command  = bash_debug_bin or bash_debug_bins[1],
+    command  = bash_debug_bins[1],
     -- Nothing to spawn - the adapter speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at what it
@@ -62,8 +56,7 @@ return {
     setup    = function(config, _, callback)
         local shared = require("ezdap.shared")
         local from_config = (type(config.command) == "table" and config.command or { config.command }) --[[@as string[] ]]
-        local candidates = bash_debug_bin and { bash_debug_bin } or
-            vim.list_extend({ from_config[1] }, bash_debug_bins)
+        local candidates = vim.list_extend({ from_config[1] }, bash_debug_bins)
         local exe, tried = shared.resolve_path(candidates, shared.is_executable)
         if not exe then
             return callback("bash-debug-adapter not found (install it from npm, a distro package, or mason); tried " ..

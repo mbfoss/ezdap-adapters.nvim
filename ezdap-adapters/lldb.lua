@@ -1,21 +1,19 @@
 -- lldb-dap - LLVM's native DAP adapter. The launch/attach parameters mirror the
 -- LLDB docs (https://lldb.llvm.org/use/lldbdap.html).
 
--- Set to an lldb-dap path to skip detection entirely; otherwise the config's
--- lldb-dap is tried first, then the candidates below.
-local lldb_dap_bin = nil ---@type string?
-
--- Where to look for lldb-dap, in order. A leading "$" names an environment
--- variable, skipped when unset; "~" expands to the home directory. A bare name
--- (no separator) is looked up on $PATH, which is where every install is picked up
--- from: a versioned LLVM ("lldb-dap-21", added here or set as `lldb_dap_bin`), a
--- package manager's prefix, or Xcode's toolchain, whose bin directory `xcode-select
--- -p` names and which `xcrun lldb-dap` runs without $PATH at all.
+-- Where to look for lldb-dap, in order; the config's lldb-dap is tried first,
+-- then these, and the first executable wins. Put your own path first to pin it.
+-- A leading "$" names an environment variable, skipped when unset; "~" expands
+-- to the home directory. A bare name (no separator) is looked up on $PATH, which
+-- is where every install is picked up from: a versioned LLVM ("lldb-dap-21",
+-- added here), a package manager's prefix, or Xcode's toolchain, whose bin
+-- directory `xcode-select -p` names and which `xcrun lldb-dap` runs without
+-- $PATH at all.
 local lldb_dap_bins = { "lldb-dap" }
 
 ---@type ezdap.AdapterDef
 return {
-    command  = lldb_dap_bin or lldb_dap_bins[1],
+    command  = lldb_dap_bins[1],
     -- Nothing to spawn - lldb-dap speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at what it
@@ -23,8 +21,7 @@ return {
     setup    = function(config, _, callback)
         local shared = require("ezdap.shared")
         local from_config = (type(config.command) == "table" and config.command or { config.command }) --[[@as string[] ]]
-        local candidates = lldb_dap_bin and { lldb_dap_bin } or
-            vim.list_extend({ from_config[1] }, lldb_dap_bins)
+        local candidates = vim.list_extend({ from_config[1] }, lldb_dap_bins)
         local exe, tried = shared.resolve_path(candidates, shared.is_executable)
         if not exe then
             return callback("lldb-dap not found (install LLVM, or Xcode's command line tools); tried " ..

@@ -4,17 +4,13 @@
 -- adapter never dials the debuggee, it *listens* for Xdebug to connect back to
 -- it, so the bodiless `listen` mode is a launch request too.
 
--- Set to the adapter's phpDebug.js to skip detection entirely; otherwise the
--- first candidate below that is readable wins.
-local php_debug_js = nil ---@type string?
-
--- Where to look for the adapter's js entry point, in order. A leading "$" names
--- an environment variable, skipped when unset; "~" expands to the home
--- directory. Mason is only one of the entries and not required - unpack the
--- .vsix anywhere and point $PHP_DEBUG_HOME at it, either at the extension root
--- or at the directory above it. Entries are literal paths, so a VS Code install,
--- which carries a version suffix, needs that directory named here, or
--- `php_debug_js` set to the file.
+-- Where to look for the adapter's js entry point, in order; the first readable
+-- one wins. Put your own file first to pin it. A leading "$" names an
+-- environment variable, skipped when unset; "~" expands to the home directory.
+-- Mason is only one of the entries and not required - unpack the .vsix anywhere
+-- and point $PHP_DEBUG_HOME at it, either at the extension root or at the
+-- directory above it. Entries are literal paths, so a VS Code install, which
+-- carries a version suffix, needs that directory named here.
 local php_debug_jss = {
     "$PHP_DEBUG_HOME/out/phpDebug.js",
     "$PHP_DEBUG_HOME/extension/out/phpDebug.js",
@@ -22,8 +18,7 @@ local php_debug_jss = {
         "php-debug-adapter", "extension", "out", "phpDebug.js"),
 }
 
--- The Node.js that runs the adapter; `node_bin` pins one, `node_bins` is searched.
-local node_bin = nil ---@type string?
+-- The Node.js that runs the adapter; put your own path first to pin it.
 local node_bins = { "node" }
 
 ---Attributes both modes accept - everything that configures the DBGP side of
@@ -160,7 +155,7 @@ end
 
 ---@type ezdap.AdapterDef
 return {
-    command = { node_bin or node_bins[1], php_debug_js or _first_literal(php_debug_jss) },
+    command = { node_bins[1], _first_literal(php_debug_jss) },
     -- Nothing to spawn - the adapter speaks DAP over stdio - but it is a js file
     -- rather than a binary on $PATH, so both halves are located here, where a
     -- plain error string reaches the user: the node that runs it, and the file
@@ -168,14 +163,12 @@ return {
     setup = function(config, _, callback)
         local shared = require("ezdap.shared")
         local js, tried = shared.resolve_path(
-            php_debug_js and { php_debug_js } or php_debug_jss,
-            function(cand) return vim.fn.filereadable(cand) == 1 end)
+            php_debug_jss, function(cand) return vim.fn.filereadable(cand) == 1 end)
         if not js then
             return callback("php-debug-adapter not found (unpack its .vsix, or install it via mason); tried " ..
                 table.concat(tried, ", "))
         end
-        local node, node_tried = shared.resolve_path(
-            node_bin and { node_bin } or node_bins, shared.is_executable)
+        local node, node_tried = shared.resolve_path(node_bins, shared.is_executable)
         if not node then
             return callback("node not found; tried " .. table.concat(node_tried, ", "))
         end

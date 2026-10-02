@@ -12,18 +12,16 @@
 -- the common half and defines its own launch/attach fields - no console, no VM
 -- arguments; the flutter tool is configured through `tool_args` instead.
 
--- Set to a path to skip detection entirely; otherwise the first candidate below
--- that is executable wins. A leading "$" names an environment variable, skipped
--- when unset; "~" expands to the home directory. A bare name (no separator) is
--- looked up on $PATH.
-local dart_bin = nil ---@type string?
+-- Where to look for each SDK's tool, in order; the first executable wins. Put
+-- your own path first to pin it. A leading "$" names an environment variable,
+-- skipped when unset; "~" expands to the home directory. A bare name (no
+-- separator) is looked up on $PATH.
 local dart_bins = {
     "dart",
     "$DART_SDK/bin/dart",
     "$FLUTTER_ROOT/bin/dart",
 }
 
-local flutter_bin = nil ---@type string?
 local flutter_bins = {
     "flutter",
     "$FLUTTER_ROOT/bin/flutter",
@@ -241,7 +239,7 @@ local _modes = {
 
 ---@type ezdap.AdapterDef
 return {
-    command = { dart_bin or dart_bins[1], dap_subcommand },
+    command = { dart_bins[1], dap_subcommand },
     -- Nothing to spawn - every one of these adapters speaks DAP over stdio - but
     -- which tool to run is the mode's answer, not the def's, and a missing SDK
     -- fails the session with no legible reason. Both are settled here, where a
@@ -252,10 +250,8 @@ return {
         -- it carries stands.
         local spec = ctx.mode and _tool_of[ctx.mode]
         if not spec then return callback() end
-        local pinned = spec.flutter and flutter_bin or dart_bin
         local exe, tried = shared.resolve_path(
-            pinned and { pinned } or (spec.flutter and flutter_bins or dart_bins),
-            shared.is_executable)
+            spec.flutter and flutter_bins or dart_bins, shared.is_executable)
         if not exe then
             return callback(("%s not found (install the %s SDK); tried %s"):format(
                 spec.flutter and "flutter" or "dart",

@@ -1,14 +1,10 @@
 -- https://sourceware.org/gdb/current/onlinedocs/gdb.html/Debugger-Adapter-Protocol.html
 
--- Set to a gdb path to skip detection entirely; otherwise the config's gdb is
--- tried first, then the candidates below, and the first one new enough for DAP
--- wins.
-local gdb_bin = nil ---@type string?
-
--- Where to look for gdb, in order. A leading "$" names an environment variable,
--- skipped when unset; "~" expands to the home directory. A bare name (no
--- separator) is looked up on $PATH - a good place to add a cross-toolchain gdb
--- such as "arm-none-eabi-gdb".
+-- Where to look for gdb, in order; the config's gdb is tried first, then these,
+-- and the first one new enough for DAP wins. Put your own path first to pin it.
+-- A leading "$" names an environment variable, skipped when unset; "~" expands
+-- to the home directory. A bare name (no separator) is looked up on $PATH - a
+-- good place to add a cross-toolchain gdb such as "arm-none-eabi-gdb".
 local gdb_bins = {
     "gdb",
     "gdb-multiarch",
@@ -18,7 +14,7 @@ local gdb_bins = {
 -- it speak DAP at all.
 local gdb_args = { "--interpreter=dap" }
 
-local GDB = gdb_bin or gdb_bins[1]
+local GDB = gdb_bins[1]
 
 -- `coreFile` is a post-17.2 addition to gdb's DAP attach: an older gdb drops it
 -- and fails the attach with the unhelpful "attach requires either 'pid' or
@@ -80,7 +76,7 @@ end
 ---@return string? exe, string? err
 local function _resolve_gdb(preferred)
     local shared = require("ezdap.shared")
-    local candidates = gdb_bin and { gdb_bin } or vim.list_extend({ preferred }, gdb_bins)
+    local candidates = vim.list_extend({ preferred }, gdb_bins)
     -- The reason the *first* candidate was turned down, which is the one worth
     -- reporting: it is the gdb the run asked for.
     local first_err = nil

@@ -3,25 +3,20 @@
 -- (https://github.com/microsoft/vscode-js-debug/blob/main/OPTIONS.md). js-debug
 -- picks the debuggee's console via `console`, not runInTerminal.
 
--- Set to the server's dapDebugServer.js to skip detection entirely; otherwise the
--- first candidate below that is readable wins.
-local js_debug_server_js = nil ---@type string?
-
--- Where to look for the server's js entry point, in order. A leading "$" names an
+-- Where to look for the server's js entry point, in order; the first readable
+-- one wins. Put your own file first to pin it. A leading "$" names an
 -- environment variable, skipped when unset; "~" expands to the home directory.
 -- Mason is only one of the entries, and not required: the same `js-debug` tree
 -- comes out of the upstream release tarball or an npm install, and
 -- $JS_DEBUG_HOME points at wherever you unpacked it. Entries are literal paths,
--- so an install in a version-suffixed directory needs that version named here,
--- or `js_debug_server_js` set to the file.
+-- so an install in a version-suffixed directory needs that version named here.
 local js_debug_server_jss = {
     "$JS_DEBUG_HOME/src/dapDebugServer.js",
     vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "packages",
         "js-debug-adapter", "js-debug", "src", "dapDebugServer.js"),
 }
 
--- The Node.js that runs the server; `node_bin` pins one, `node_bins` is searched.
-local node_bin = nil ---@type string?
+-- The Node.js that runs the server, in order; put your own path first to pin it.
 local node_bins = { "node" }
 
 ---Source-resolution fields every mode accepts, node and browser alike.
@@ -187,14 +182,12 @@ return {
     setup = function(config, ctx, callback)
         local shared = require("ezdap.shared")
         local server_js, tried = shared.resolve_path(
-            js_debug_server_js and { js_debug_server_js } or js_debug_server_jss,
-            function(cand) return vim.fn.filereadable(cand) == 1 end)
+            js_debug_server_jss, function(cand) return vim.fn.filereadable(cand) == 1 end)
         if not server_js then
             return callback("js-debug-adapter not found (install js-debug from its release, npm, or mason); tried " ..
                 table.concat(tried, ", "))
         end
-        local node, node_tried = shared.resolve_path(
-            node_bin and { node_bin } or node_bins, shared.is_executable)
+        local node, node_tried = shared.resolve_path(node_bins, shared.is_executable)
         if not node then
             return callback("node not found (needed to run js-debug); tried " .. table.concat(node_tried, ", "))
         end

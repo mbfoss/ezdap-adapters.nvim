@@ -4,29 +4,24 @@
 -- "DAP server listening at: <host>:<port>" and expects a TCP connection, so
 -- `_setup` spawns it, parses that line and points the connection there.
 
--- Set to a dlv path to skip detection entirely; otherwise the first candidate
--- below that is executable wins.
-local delve_bin = nil ---@type string?
-
--- Where to look for dlv, in order. A leading "$" names an environment variable,
--- skipped when unset; "~" expands to the home directory. A bare name (no
--- separator) is looked up on $PATH.
+-- Where to look for dlv, in order; the first executable wins. Put your own path
+-- first to pin it. A leading "$" names an environment variable, skipped when
+-- unset; "~" expands to the home directory. A bare name (no separator) is
+-- looked up on $PATH.
 local delve_bins = {
     "dlv",
     "$GOBIN/dlv",
     "$GOPATH/bin/dlv",
-    vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "bin", "dlv"),
 }
 
 -- Subcommand and flags dlv is started with, after the binary.
 local delve_args = { "dap" }
 
----The configured dlv, or the first candidate that is executable.
+---The first candidate that is executable.
 ---@param extra? string an additional candidate tried last (e.g. from the config)
 ---@return string? dlv, string[] tried
 local function _resolve_dlv(extra)
     local shared = require("ezdap.shared")
-    if delve_bin then return delve_bin, { delve_bin } end
     local candidates = vim.list_extend(vim.deepcopy(delve_bins), extra and { extra } or {})
     return shared.resolve_path(candidates, shared.is_executable)
 end
@@ -182,7 +177,7 @@ end
 return {
     -- The literal default; `_setup` re-resolves the binary in case it is not on
     -- $PATH, and keeps any flags a config appended here.
-    command  = vim.list_extend({ delve_bin or delve_bins[1] }, delve_args),
+    command  = vim.list_extend({ delve_bins[1] }, delve_args),
     setup    = _setup,
     teardown = function(_, ctx) if ctx and ctx.handle then ctx.handle.stop() end end,
     modes = {

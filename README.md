@@ -100,7 +100,7 @@ installed.
 | [`jdtls`](ezdap-adapters/jdtls.lua) | Java | a running [jdtls](https://github.com/eclipse-jdtls/eclipse.jdt.ls) with its java-debug server started, e.g. by [nvim-jdtls](https://github.com/mfussenegger/nvim-jdtls) |
 | [`js-debug`](ezdap-adapters/js-debug.lua) | JavaScript / TypeScript | `node`, plus [js-debug](https://github.com/microsoft/vscode-js-debug)'s `dapDebugServer.js` from `$JS_DEBUG_HOME` (an unpacked release or npm install), or the mason `js-debug-adapter` package |
 | [`php-debug`](ezdap-adapters/php-debug.lua) | PHP | `node`, plus [vscode-php-debug](https://github.com/xdebug/vscode-php-debug)'s `phpDebug.js` from `$PHP_DEBUG_HOME` (an unpacked .vsix), or the mason `php-debug-adapter` package; it fronts [Xdebug](https://xdebug.org/), loaded into the PHP being debugged |
-| [`rdbg`](ezdap-adapters/rdbg.lua) | Ruby | [`rdbg`](https://github.com/ruby/debug), from the `debug` gem, on `PATH`, under `$GEM_HOME/bin` / `$GEM_ROOT/bin`, or from mason |
+| [`rdbg`](ezdap-adapters/rdbg.lua) | Ruby | [`rdbg`](https://github.com/ruby/debug), from the `debug` gem, on `PATH`, under `$GEM_HOME/bin` / `$GEM_ROOT/bin` |
 | [`dart`](ezdap-adapters/dart.lua) | Dart / Flutter | the [Dart](https://dart.dev) or [Flutter](https://flutter.dev) SDK on `PATH`, or under `$DART_SDK` / `$FLUTTER_ROOT`; the adapters ship inside the SDK |
 | [`bash-debug`](ezdap-adapters/bash-debug.lua) | Bash | `bash-debug-adapter` on `PATH` or from mason ([bash-debug](https://github.com/rogalmic/vscode-bash-debug)); it fronts bashdb, taken from `$BASHDB_HOME` (where a system install is named) or the extension's own `bashdb_dir` |
 
@@ -127,40 +127,34 @@ definition you copy and edit documents itself the same way.
 
 ## Locating the adapter <!-- tag: locating -->
 
-Paths a definition resolves (the adapter executable, and anything shipped
-beside it) are variables at the top of its file, ready to be pinned or
-extended. With the plugin installed, copy the file into
-`~/.config/nvim/ezdap-adapters/` and edit it there.
+Paths — the adapter executable, and anything shipped beside it — come from a
+candidate list at the top of the definition file. Each thing a definition locates
+— the executable, a script, a library directory, `node` — has its own list
+(`delve_bins`, `php_debug_jss`, `bashdb_lib_dirs`), searched in order; the first
+entry that exists wins.
 
-Each file has the same two variables: a singular one (`delve_bin`,
-`php_debug_js`, `bashdb_lib_dir`, …) that pins one path and skips detection
-entirely, and the plural list beside it (`delve_bins`, `php_debug_jss`, …) that
-is searched in order. In a list entry, a leading `$` names an environment
-variable and the entry is skipped when it is unset, `~` is the home directory,
-and a bare name with no separator is looked up on `PATH`.
+```lua
+local delve_bins = {
+    "dlv",             -- bare name: looked up on $PATH
+    "$GOBIN/dlv",      -- leading $: environment variable, skipped when unset
+    "~/go/bin/dlv",    -- ~: home directory
+}
+```
 
-Lists cover only what `PATH` does not. A bare `dlv` finds `/usr/local/bin/dlv`
-on its own, so the only things spelled out are what `PATH` cannot reach: an SDK
-prefix named by a toolchain variable, and mason's package directory. No list
-hardcodes an absolute or home-relative path, which keeps every definition
-working the same way on Linux, macOS and Windows. A package manager's prefix is
-not there, since Homebrew, a distro package and a hand-built install all put the
-binary somewhere `PATH` reaches, and neither is any prefix an unpacked release
-might sit under: point an environment variable, or the file's singular variable,
-at wherever you put it.
+To override, either:
 
-For the same reason an adapter that is a plain executable gets no environment
-variable of its own. The variables that are there either belong to the
-language's own toolchain (`$GOBIN`, `$GOPATH`, `$GEM_HOME`, `$VIRTUAL_ENV`,
-`$DART_SDK`, `$FLUTTER_ROOT`) or name something `PATH` cannot express: a venv,
-a `.js` entry point, an unpacked extension directory (`$DEBUGPY_VENV`,
-`$JS_DEBUG_HOME`, `$PHP_DEBUG_HOME`, `$BASHDB_HOME`, `$BASH_DEBUG_ADAPTER`).
-
-mason paths are entries in these lists like any other, so mason is entirely
-optional; a definition never requires it, and never looks at whether it is
-installed. Entries are literal paths, with no globbing, so a VS Code extension
-directory carrying a version suffix has to be named in full or pinned with the
-singular variable.
+- set an environment variable an entry already reads (`$GOBIN`,
+  `$JS_DEBUG_HOME`, `$DEBUGPY_VENV`, …) — no copy, no edit; or
+- copy the file into `~/.config/nvim/ezdap-adapters/` and edit — put your own
+  path first in the list to pin it.
+- Lists carry what `PATH` cannot reach: SDK prefixes behind a toolchain
+  variable, mason's package directory. `PATH` already finds a bare `dlv`, so no
+  absolute or home-relative paths, and no package manager prefixes.
+- Mason optional: its paths are ordinary entries; nothing checks for it.
+- Environment variables only where `PATH` cannot express the path: `$GOBIN`,
+  `$GOPATH`, `$GEM_HOME`, `$DART_SDK`, `$FLUTTER_ROOT`; `$DEBUGPY_VENV`,
+  `$JS_DEBUG_HOME`, `$PHP_DEBUG_HOME` (venv, `.js` entry point, unpacked
+  extension). A plain executable gets none.
 
 ## Writing your own <!-- tag: writing -->
 

@@ -3,21 +3,17 @@
 -- (https://github.com/vadimcn/codelldb/blob/master/MANUAL.md). `type` is always
 -- "lldb"; `name` is a display label.
 
--- Set to a codelldb path to skip detection entirely; otherwise the config's
--- codelldb is tried first, then the candidates below.
-local codelldb_bin = nil ---@type string?
-
--- Where to look for the adapter binary, in order. A leading "$" names an
--- environment variable, skipped when unset; "~" expands to the home directory. A
--- bare name (no separator) is looked up on $PATH, which is where an unpacked
--- release or a distro package is picked up from - put its adapter directory on
--- $PATH, or set `codelldb_bin` to the binary. Mason ships a shim in its `bin`,
+-- Where to look for the adapter binary, in order; the config's codelldb is tried
+-- first, then these, and the first executable wins. Put your own path first to
+-- pin it. A leading "$" names an environment variable, skipped when unset; "~"
+-- expands to the home directory. A bare name (no separator) is looked up on
+-- $PATH, which is where an unpacked release or a distro package is picked up
+-- from: put its adapter directory on $PATH, or list the binary here first. Mason
+-- ships a shim in its `bin`,
 -- which is on $PATH only when mason.nvim was set up to put it there, so the
 -- binary inside the package is listed too; mason itself is not required.
 local codelldb_bins = {
     "codelldb",
-    vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "bin", "codelldb"),
-    vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "packages", "codelldb", "extension", "adapter", "codelldb"),
 }
 
 ---Attributes codelldb accepts on both a launch and an attach. Declared once and
@@ -76,7 +72,7 @@ end
 
 ---@type ezdap.AdapterDef
 return {
-    command = codelldb_bin or codelldb_bins[1],
+    command = codelldb_bins[1],
     -- Nothing to spawn - codelldb speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at what it
@@ -84,8 +80,7 @@ return {
     setup = function(config, _, callback)
         local shared = require("ezdap.shared")
         local from_config = (type(config.command) == "table" and config.command or { config.command }) --[[@as string[] ]]
-        local candidates = codelldb_bin and { codelldb_bin } or
-            vim.list_extend({ from_config[1] }, codelldb_bins)
+        local candidates = vim.list_extend({ from_config[1] }, codelldb_bins)
         local exe, tried = shared.resolve_path(candidates, shared.is_executable)
         if not exe then
             return callback("codelldb not found (unpack its .vsix or release, or install it via mason); tried " ..

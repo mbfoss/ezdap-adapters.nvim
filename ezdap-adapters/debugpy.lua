@@ -1,15 +1,12 @@
 -- https://github.com/microsoft/debugpy/wiki/Debug-configuration-settings
 
--- Set to an interpreter path to skip detection entirely; otherwise the first
--- candidate below that has debugpy importable wins.
-local debugpy_python = nil ---@type string?
-
 -- Directories searched for a venv-style interpreter (bin/python, or
--- Scripts/python.exe on Windows), in order. A leading "$" names an environment
--- variable, skipped when unset; "~" expands to the home directory; a relative
--- entry resolves against the cwd. Mason is only one of the entries, and the last
--- of them: `pip install debugpy` into the project's venv, or into the
--- interpreter tried below, is enough on its own.
+-- Scripts/python.exe on Windows), in order; the first one with debugpy
+-- importable wins, so put your own interpreter's directory first to pin it. A
+-- leading "$" names an environment variable, skipped when unset; "~" expands to
+-- the home directory; a relative entry resolves against the cwd. Mason is only
+-- one of the entries, and the last of them: `pip install debugpy` into the
+-- project's venv, or into the interpreter tried below, is enough on its own.
 local debugpy_venv_dirs = {
     "$DEBUGPY_VENV",
     "$VIRTUAL_ENV",
@@ -56,26 +53,21 @@ end
 ---@param callback fun(err?: string, state?: any)
 local function _debugpy_setup(config, ctx, callback)
     local shared = require("ezdap.shared")
-    local python = debugpy_python
-    if python then
-        if not _has_debugpy(python) then return callback("debugpy is not installed for " .. python) end
-    else
-        -- Venvs first, then bare interpreters, then whatever the config named: the
-        -- first one debugpy actually imports under wins, so no venv is required.
-        local cwd = config.cwd or vim.fn.getcwd()
-        local venv_tried, bare_tried
-        python, venv_tried = shared.resolve_path(debugpy_venv_dirs, _has_debugpy,
-            { cwd = cwd, transform = _venv_python })
+    -- Venvs first, then bare interpreters, then whatever the config named: the
+    -- first one debugpy actually imports under wins, so no venv is required.
+    local cwd = config.cwd or vim.fn.getcwd()
+    local python, venv_tried = shared.resolve_path(debugpy_venv_dirs, _has_debugpy,
+        { cwd = cwd, transform = _venv_python })
+    if not python then
+        local bare = vim.deepcopy(debugpy_pythons)
+        local from_config = type(config.command) == "table" and config.command[1] or config.command
+        if type(from_config) == "string" then table.insert(bare, from_config) end
+        local bare_tried
+        python, bare_tried = shared.resolve_path(bare, _has_debugpy)
         if not python then
-            local bare = vim.deepcopy(debugpy_pythons)
-            local from_config = type(config.command) == "table" and config.command[1] or config.command
-            if type(from_config) == "string" then table.insert(bare, from_config) end
-            python, bare_tried = shared.resolve_path(bare, _has_debugpy)
-            if not python then
-                local tried = vim.list_extend(venv_tried, bare_tried)
-                return callback("no python with debugpy installed found (tried " ..
-                    table.concat(tried, ", ") .. ")")
-            end
+            local tried = vim.list_extend(venv_tried, bare_tried)
+            return callback("no python with debugpy installed found (tried " ..
+                table.concat(tried, ", ") .. ")")
         end
     end
     local port   = _free_port()

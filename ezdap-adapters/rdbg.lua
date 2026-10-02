@@ -8,18 +8,14 @@
 -- keys the gem's DAP server actually reads are `localfs`, `localfsMap` and
 -- `nonstop`; see `process_request` in lib/debug/server_dap.rb.
 
--- Set to an rdbg path to skip detection entirely; otherwise the first candidate
--- below that is executable wins.
-local rdbg_bin = nil ---@type string?
-
--- Where to look for rdbg, in order. A leading "$" names an environment variable,
--- skipped when unset; "~" expands to the home directory. A bare name (no
--- separator) is looked up on $PATH.
+-- Where to look for rdbg, in order; the first executable wins. Put your own path
+-- first to pin it. A leading "$" names an environment variable, skipped when
+-- unset; "~" expands to the home directory. A bare name (no separator) is looked
+-- up on $PATH.
 local rdbg_bins = {
     "rdbg",
     "$GEM_HOME/bin/rdbg",
     "$GEM_ROOT/bin/rdbg",
-    vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "bin", "rdbg"),
 }
 
 -- The interface rdbg binds its debug port to, and the host ezdap then connects
@@ -46,11 +42,10 @@ end
 ---sent, so `setup` consumes the key and drops it.
 local RDBG_KEY = "__rdbg"
 
----The configured rdbg, or the first candidate that is executable.
+---The first candidate that is executable.
 ---@return string? rdbg, string[] tried
 local function _resolve_rdbg()
     local shared = require("ezdap.shared")
-    if rdbg_bin then return rdbg_bin, { rdbg_bin } end
     return shared.resolve_path(rdbg_bins, shared.is_executable)
 end
 
@@ -258,7 +253,7 @@ return {
     -- connects instead, and `setup` always sets one. It is here so `:checkhealth
     -- ezdap` has an executable to look for, and `setup` re-resolves it in case it
     -- is not on $PATH.
-    command = rdbg_bin or rdbg_bins[1],
+    command = rdbg_bins[1],
     -- The endpoint is not known until `setup` has either started a server or been
     -- told where an existing one is. Because this adapter has a `setup`, a task's
     -- own host/port are left to it rather than applied by the runner, so `remote`
