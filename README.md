@@ -169,8 +169,6 @@ See [Writing an adapter definition][writing].
 
 [writing]: https://github.com/mbfoss/ezdap.nvim/blob/main/WRITING-DEFINITIONS.md
 
-Contributions of new definitions are welcome.
-
 ## License <!-- tag: license -->
 
 [MIT](LICENSE).
