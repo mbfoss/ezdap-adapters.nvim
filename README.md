@@ -93,7 +93,7 @@ installed.
 | --- | --- | --- |
 | [`debugpy`](ezdap-adapters/debugpy.lua) | Python | a Python that can import [debugpy](https://github.com/microsoft/debugpy): `$DEBUGPY_VENV`, `$VIRTUAL_ENV`, a project `.venv`/`venv`/`env`, the mason venv, then `python3` / `python` |
 | [`codelldb`](ezdap-adapters/codelldb.lua) | C / C++ / Rust | [`codelldb`](https://github.com/vadimcn/codelldb) on `PATH` or from mason |
-| [`lldb`](ezdap-adapters/lldb.lua) | C / C++ / Rust | `lldb-dap`, LLVM's own adapter, on `PATH`: from an LLVM install (a versioned `lldb-dap-21` works too), or from Xcode's toolchain, whose bin directory `xcode-select -p` names |
+| [`lldb`](ezdap-adapters/lldb.lua) | C / C++ / Rust | `lldb-dap`, LLVM's own adapter, on `PATH` |
 | [`gdb`](ezdap-adapters/gdb.lua) | C / C++ | [GDB](https://sourceware.org/gdb/) 14.1+ on `PATH`; its own adapter via `gdb --interpreter=dap`; `core` needs 17.3+ |
 | [`delve`](ezdap-adapters/delve.lua) | Go | [`dlv`](https://github.com/go-delve/delve) on `PATH`, under `$GOBIN` / `$GOPATH/bin`, or from mason; its own adapter via `dlv dap` |
 | [`netcoredbg`](ezdap-adapters/netcoredbg.lua) | .NET | [`netcoredbg`](https://github.com/Samsung/netcoredbg) on `PATH` or from mason |
