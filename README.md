@@ -1,5 +1,10 @@
 # ndebug-adapters.nvim
 
+> [!NOTE]
+> **Work in progress.** Stable and usable as it stands, but still evolving:
+> changes, including breaking ones, can land at any time. Pin a commit if you
+> need a fixed target.
+
 Ready-made DAP adapter definitions for
 [ndebug.nvim](https://github.com/mbfoss/ndebug.nvim). Install it and they are all
 available at once.
