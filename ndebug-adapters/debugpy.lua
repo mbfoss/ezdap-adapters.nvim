@@ -48,11 +48,11 @@ local function _free_port()
 end
 
 ---Spawn the local debugpy adapter on a free port and point the connection at it.
----@param config   ezdap.dap.Config
----@param ctx      ezdap.AdapterSetupCtx
+---@param config   ndebug.dap.Config
+---@param ctx      ndebug.AdapterSetupCtx
 ---@param callback fun(err?: string, state?: any)
 local function _debugpy_setup(config, ctx, callback)
-    local shared = require("ezdap.shared")
+    local shared = require("ndebug.shared")
     -- Venvs first, then bare interpreters: the first one debugpy actually imports
     -- under wins, so no venv is required.
     local cwd = config.cwd or vim.fn.getcwd()
@@ -91,7 +91,7 @@ end
 
 ---Attributes debugpy accepts on both a launch and an attach. Declared once and
 ---merged into every mode, so a field is described in one place.
----@type table<string, ezdap.Input>
+---@type table<string, ndebug.Input>
 local _common_inputs = {
     just_my_code      = { type = "boolean", description = "debug only user-written code (default false)" },
     show_return_value = { type = "boolean", description = "show function return values while stepping (default true)" },
@@ -107,14 +107,14 @@ local _common_inputs = {
 }
 
 ---A mode's own inputs on top of the common set.
----@param extra table<string, ezdap.Input>
----@return table<string, ezdap.Input>
+---@param extra table<string, ndebug.Input>
+---@return table<string, ndebug.Input>
 local function _inputs(extra)
     return vim.tbl_extend("error", vim.deepcopy(_common_inputs), extra)
 end
 
 ---Assign the common attributes, plus the `type` every debugpy body carries.
----`justMyCode`/`showReturnValue` keep ezdap's defaults when left unset.
+---`justMyCode`/`showReturnValue` keep ndebug's defaults when left unset.
 ---@param inputs table<string, any>
 ---@return table params
 local function _common_body(inputs)
@@ -141,7 +141,7 @@ local function _common_body(inputs)
 end
 
 ---Launch-only attributes shared by the `script`, `module` and `code` modes.
----@type table<string, ezdap.Input>
+---@type table<string, ndebug.Input>
 local _launch_inputs = {
     cwd           = { type = "string", completion = "dir", description = "working directory" },
     env           = { type = "map", description = "environment variables" },
@@ -154,7 +154,7 @@ local _launch_inputs = {
 ---@return table params
 local function _launch_body(inputs)
     local params = _common_body(inputs)
-    params.cwd         = require("ezdap.shared").normalize_path(inputs.cwd)
+    params.cwd         = require("ndebug.shared").normalize_path(inputs.cwd)
     params.env         = inputs.env
     params.python      = inputs.python
     params.console     = inputs.console
@@ -165,7 +165,7 @@ end
 -- Attach to a remote Python process: the `connect`/`listen` groups target the
 -- REMOTE process and go in the body, not the task-level connection (the local
 -- adapter's port is chosen by `_debugpy_setup`, which also spawns it).
----@type ezdap.AdapterDef
+---@type ndebug.AdapterDef
 return {
     setup    = _debugpy_setup,
     teardown = function(_, ctx) if ctx then ctx.handle.stop() end end,
@@ -180,7 +180,7 @@ return {
             })),
             build = function(inputs)
                 local params = _launch_body(inputs)
-                params.program, params.args = require("ezdap.shared").split_command(inputs.command)
+                params.program, params.args = require("ndebug.shared").split_command(inputs.command)
                 return params
             end,
         },
@@ -219,7 +219,7 @@ return {
                 pid = { type = "integer", description = "process id to attach to" },
             },
             build = function(inputs)
-                local pid, err = require("ezdap.shared").resolve_pid(inputs.pid)
+                local pid, err = require("ndebug.shared").resolve_pid(inputs.pid)
                 if not pid then return nil, err end
                 local params = _common_body(inputs)
                 params.processId = pid
@@ -234,7 +234,7 @@ return {
                 port = { type = "integer", required = true, description = "remote debugpy port" },
             },
             build = function(inputs)
-                local port, err = require("ezdap.shared").resolve_port(inputs.port)
+                local port, err = require("ndebug.shared").resolve_port(inputs.port)
                 if err then return nil, err end
                 local params = _common_body(inputs)
                 params.connect = { host = inputs.host, port = port }
@@ -251,7 +251,7 @@ return {
                 port = { type = "integer", required = true, description = "port to listen on" },
             },
             build = function(inputs)
-                local port, err = require("ezdap.shared").resolve_port(inputs.port)
+                local port, err = require("ndebug.shared").resolve_port(inputs.port)
                 if err then return nil, err end
                 local params = _common_body(inputs)
                 params.listen = { host = inputs.host or "127.0.0.1", port = port }

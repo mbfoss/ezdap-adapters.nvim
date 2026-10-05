@@ -18,7 +18,7 @@ local codelldb_bins = {
 
 ---Attributes codelldb accepts on both a launch and an attach. Declared once and
 ---merged into every mode, so a field is described in one place.
----@type table<string, ezdap.Input>
+---@type table<string, ndebug.Input>
 local _common_inputs = {
     source_map             = { type = "map", completion = "dir", description = "source path remappings, from=to" },
     relative_path_base     = { type = "string", completion = "dir", description = "base directory for relative source paths" },
@@ -38,12 +38,12 @@ local _common_inputs = {
 ---@param path string
 ---@return string
 local function _quoted(path)
-    return '"' .. require("ezdap.shared").normalize_path(path) .. '"'
+    return '"' .. require("ndebug.shared").normalize_path(path) .. '"'
 end
 
 ---A mode's own inputs on top of the common set.
----@param extra table<string, ezdap.Input>
----@return table<string, ezdap.Input>
+---@param extra table<string, ndebug.Input>
+---@return table<string, ndebug.Input>
 local function _inputs(extra)
     return vim.tbl_extend("error", vim.deepcopy(_common_inputs), extra)
 end
@@ -52,7 +52,7 @@ end
 ---@param inputs table<string, any>
 ---@return table params
 local function _common_body(inputs)
-    local shared = require("ezdap.shared")
+    local shared = require("ndebug.shared")
     local params = {}
     params.name                 = "codelldb"
     params.type                 = "lldb"
@@ -70,10 +70,10 @@ local function _common_body(inputs)
     return params
 end
 
----@type ezdap.AdapterDef
+---@type ndebug.AdapterDef
 return {
     setup = function(config, _, callback)
-        local shared = require("ezdap.shared")
+        local shared = require("ndebug.shared")
         local exe, tried = shared.resolve_path(codelldb_bins, shared.is_executable)
         if not exe then
             return callback("codelldb not found (unpack its .vsix or release, or install it via mason); tried " ..
@@ -98,7 +98,7 @@ return {
                 stop_on_entry = { type = "boolean", description = "break at program entry" },
             },
             build = function(inputs)
-                local shared = require("ezdap.shared")
+                local shared = require("ndebug.shared")
                 local params = _common_body(inputs)
                 params.program, params.args = shared.split_command(inputs.command)
                 params.cwd         = shared.normalize_path(inputs.cwd)
@@ -119,7 +119,7 @@ return {
                 stop_on_entry = { type = "boolean", description = "break immediately after attaching" },
             },
             build = function(inputs)
-                local shared = require("ezdap.shared")
+                local shared = require("ndebug.shared")
                 local pid, err = shared.resolve_pid(inputs.pid)
                 if not pid then return nil, err end
                 local params = _common_body(inputs)
@@ -139,7 +139,7 @@ return {
             },
             build = function(inputs)
                 local params = _common_body(inputs)
-                params.program     = require("ezdap.shared").normalize_path(inputs.program)
+                params.program     = require("ndebug.shared").normalize_path(inputs.program)
                 params.waitFor     = inputs.wait_for
                 params.stopOnEntry = inputs.stop_on_entry
                 return params
@@ -179,7 +179,7 @@ return {
             -- `processCreateCommands`: without one codelldb runs `process launch` and
             -- debugs the program locally instead of the remote.
             build = function(inputs)
-                local port, err = require("ezdap.shared").resolve_port(inputs.port)
+                local port, err = require("ndebug.shared").resolve_port(inputs.port)
                 if err then return nil, err end
                 local params = _common_body(inputs)
                 if inputs.program then

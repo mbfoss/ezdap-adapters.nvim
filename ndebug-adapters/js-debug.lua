@@ -20,7 +20,7 @@ local js_debug_server_jss = {
 local node_bins = { "node" }
 
 ---Source-resolution fields every mode accepts, node and browser alike.
----@type table<string, ezdap.Input>
+---@type table<string, ndebug.Input>
 local _source_inputs = {
     source_maps                  = { type = "boolean", description = "use source maps when they exist" },
     source_map_path_overrides    = { type = "map", description = "rewrite sourcemap file locations, from=to" },
@@ -31,7 +31,7 @@ local _source_inputs = {
 }
 
 ---Fields both Node modes accept on top of the source ones.
----@type table<string, ezdap.Input>
+---@type table<string, ndebug.Input>
 local _node_inputs = {
     cwd                         = { type = "string", completion = "dir", description = "working directory" },
     env                         = { type = "map", description = "environment variables" },
@@ -41,8 +41,8 @@ local _node_inputs = {
 }
 
 ---A mode's inputs: the source-resolution set plus whichever groups apply.
----@param ... table<string, ezdap.Input>
----@return table<string, ezdap.Input>
+---@param ... table<string, ndebug.Input>
+---@return table<string, ndebug.Input>
 local function _inputs(...)
     local out = vim.deepcopy(_source_inputs)
     for _, group in ipairs({ ... }) do
@@ -67,7 +67,7 @@ end
 ---@param inputs table<string, any>
 ---@return table params
 local function _node_body(inputs)
-    local shared = require("ezdap.shared")
+    local shared = require("ndebug.shared")
     local params = _source_body(inputs)
     params.type                     = "pwa-node"
     params.cwd                      = shared.normalize_path(inputs.cwd)
@@ -78,7 +78,7 @@ local function _node_body(inputs)
     return params
 end
 
----@type table<string, ezdap.Mode>
+---@type table<string, ndebug.Mode>
 local _modes = {
     -- One `command` input carries the whole command line; `build` splits it into
     -- `program` (the first word) and `args` (the rest). The runtime is not part of
@@ -95,7 +95,7 @@ local _modes = {
         }),
         build = function(inputs)
             local params = _node_body(inputs)
-            params.program, params.args = require("ezdap.shared").split_command(inputs.command)
+            params.program, params.args = require("ndebug.shared").split_command(inputs.command)
             params.runtimeExecutable = inputs.runtime_executable
             params.runtimeArgs       = inputs.runtime_args
             params.stopOnEntry       = inputs.stop_on_entry
@@ -114,7 +114,7 @@ local _modes = {
             continue_on_attach       = { type = "boolean", description = "resume a program waiting on --inspect-brk" },
         }),
         build = function(inputs)
-            local pid, err = require("ezdap.shared").resolve_pid(inputs.pid)
+            local pid, err = require("ndebug.shared").resolve_pid(inputs.pid)
             if not pid then return nil, err end
             local params = _node_body(inputs)
             params.processId              = pid
@@ -136,7 +136,7 @@ local _modes = {
             continue_on_attach       = { type = "boolean", description = "resume a program waiting on --inspect-brk" },
         }),
         build = function(inputs)
-            local shared = require("ezdap.shared")
+            local shared = require("ndebug.shared")
             local port, err = shared.resolve_port(inputs.port)
             if err then return nil, err end
             local params = _node_body(inputs)
@@ -163,7 +163,7 @@ local _modes = {
             runtime_args       = { type = "list", description = "arguments passed to the browser" },
         },
         build = function(inputs)
-            local shared = require("ezdap.shared")
+            local shared = require("ndebug.shared")
             local params = _source_body(inputs)
             params.type              = "pwa-chrome"
             params.url               = inputs.url
@@ -177,10 +177,10 @@ local _modes = {
     },
 }
 
----@type ezdap.AdapterDef
+---@type ndebug.AdapterDef
 return {
     setup = function(config, ctx, callback)
-        local shared = require("ezdap.shared")
+        local shared = require("ndebug.shared")
         local server_js, tried = shared.resolve_path(
             js_debug_server_jss, function(cand) return vim.fn.filereadable(cand) == 1 end)
         if not server_js then

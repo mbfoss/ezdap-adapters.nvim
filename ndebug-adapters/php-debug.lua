@@ -25,7 +25,7 @@ local node_bins = { "node" }
 ---the session, which is the same whether the debuggee was started here or
 ---connects on its own. Declared once and merged into every mode, so a field
 ---is described in one place.
----@type table<string, ezdap.Input>
+---@type table<string, ndebug.Input>
 local _common_inputs = {
     port               = { type = "integer", description = "port to listen for Xdebug on (default 9003)" },
     hostname           = { type = "string", description = "address to bind while listening (default :: - every interface)" },
@@ -46,8 +46,8 @@ local _common_inputs = {
 }
 
 ---A mode's own inputs on top of the common set.
----@param extra table<string, ezdap.Input>
----@return table<string, ezdap.Input>
+---@param extra table<string, ndebug.Input>
+---@return table<string, ndebug.Input>
 local function _inputs(extra)
     return vim.tbl_extend("error", vim.deepcopy(_common_inputs), extra)
 end
@@ -57,7 +57,7 @@ end
 ---@param inputs table<string, any>
 ---@return table? params, string? err
 local function _common_body(inputs)
-    local shared = require("ezdap.shared")
+    local shared = require("ndebug.shared")
     local port, err = shared.resolve_port(inputs.port)
     if err then return nil, err end
     local proxy_port, proxy_err = shared.resolve_port(inputs.proxy_port)
@@ -92,7 +92,7 @@ local function _common_body(inputs)
     return params
 end
 
----@type table<string, ezdap.Mode>
+---@type table<string, ndebug.Mode>
 local _modes = {
     -- The usual PHP session: nothing is started here, the adapter just holds the
     -- port open and the next request Xdebug is enabled for connects back to it.
@@ -127,7 +127,7 @@ local _modes = {
             console            = { type = "string", completion = { "internalConsole", "integratedTerminal", "externalTerminal" }, description = "where the debuggee's stdio goes" },
         },
         build = function(inputs)
-            local shared = require("ezdap.shared")
+            local shared = require("ndebug.shared")
             local params, err = _common_body(inputs)
             if not params then return nil, err end
             params.program, params.args = shared.split_command(inputs.command)
@@ -142,14 +142,14 @@ local _modes = {
     },
 }
 
----@type ezdap.AdapterDef
+---@type ndebug.AdapterDef
 return {
     -- Nothing to spawn - the adapter speaks DAP over stdio - but it is a js file
     -- rather than a binary on $PATH, so both halves are located here, where a
     -- plain error string reaches the user: the node that runs it, and the file
     -- itself.
     setup = function(config, _, callback)
-        local shared = require("ezdap.shared")
+        local shared = require("ndebug.shared")
         local js, tried = shared.resolve_path(
             php_debug_jss, function(cand) return vim.fn.filereadable(cand) == 1 end)
         if not js then

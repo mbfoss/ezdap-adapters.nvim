@@ -63,7 +63,7 @@ local function _fmt(v) return ("%d.%d"):format(v[1], v[2]) end
 ---Versions are cached, so the accepted one is re-read for free by the caller.
 ---@return string? exe, string? err
 local function _resolve_gdb()
-    local shared = require("ezdap.shared")
+    local shared = require("ndebug.shared")
     -- The reason the *first* candidate was turned down, which is the one worth
     -- reporting: it is the gdb the run asked for.
     local first_err = nil
@@ -79,7 +79,7 @@ local function _resolve_gdb()
     return nil, ("%s (tried %s)"):format(first_err or "no gdb found", table.concat(tried, ", "))
 end
 
----@type ezdap.AdapterDef
+---@type ndebug.AdapterDef
 return {
     -- Nothing to spawn - gdb speaks DAP over stdio - but a gdb that cannot do what
     -- the run asks of it fails in ways the session never surfaces legibly, so both
@@ -111,7 +111,7 @@ return {
                 ada_charset   = { type = "string", description = "Ada source character set" },
             },
             build = function(inputs)
-                local shared = require("ezdap.shared")
+                local shared = require("ndebug.shared")
                 local program, args = shared.split_command(inputs.command)
                 return {
                     program                         = program,
@@ -133,7 +133,7 @@ return {
                 ada_charset = { type = "string", description = "Ada source character set" },
             },
             build = function(inputs)
-                local shared = require("ezdap.shared")
+                local shared = require("ndebug.shared")
                 local pid, err = shared.resolve_pid(inputs.pid)
                 if not pid then return nil, err end
                 return {
@@ -155,7 +155,7 @@ return {
             build = function(inputs)
                 return {
                     target           = inputs.connection,
-                    program          = require("ezdap.shared").normalize_path(inputs.program),
+                    program          = require("ndebug.shared").normalize_path(inputs.program),
                     adaSourceCharset = inputs.ada_charset,
                 }
             end,
@@ -169,7 +169,7 @@ return {
                 ada_charset = { type = "string", description = "Ada source character set" },
             },
             build = function(inputs)
-                local shared = require("ezdap.shared")
+                local shared = require("ndebug.shared")
                 return {
                     coreFile         = shared.normalize_path(inputs.corefile),
                     program          = shared.normalize_path(inputs.program),

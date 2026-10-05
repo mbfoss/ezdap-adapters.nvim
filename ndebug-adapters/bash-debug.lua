@@ -34,7 +34,7 @@ local bash_tools = {
 ---The first candidate that is a directory.
 ---@return string?
 local function _resolve_lib_dir()
-    local shared = require("ezdap.shared")
+    local shared = require("ndebug.shared")
     return (shared.resolve_path(bashdb_lib_dirs, shared.is_directory))
 end
 
@@ -46,14 +46,14 @@ local function _bashdb_script(lib_dir)
     return lib_dir and vim.fs.joinpath(lib_dir, "bashdb") or "bashdb"
 end
 
----@type ezdap.AdapterDef
+---@type ndebug.AdapterDef
 return {
     -- Nothing to spawn - the adapter speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at what it
     -- finds.
     setup    = function(config, _, callback)
-        local shared = require("ezdap.shared")
+        local shared = require("ndebug.shared")
         local exe, tried = shared.resolve_path(bash_debug_bins, shared.is_executable)
         if not exe then
             return callback("bash-debug-adapter not found (install it from npm, a distro package, or mason); tried " ..
@@ -73,7 +73,7 @@ return {
                 terminal_kind = { type = "string", completion = { "integrated", "external", "debugConsole" }, description = "where the debuggee's stdio goes (default integrated)" },
             },
             build = function(inputs)
-                local shared = require("ezdap.shared")
+                local shared = require("ndebug.shared")
                 local lib_dir = _resolve_lib_dir()
                 return {
                     type          = "bashdb",

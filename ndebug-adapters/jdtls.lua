@@ -4,7 +4,7 @@
 -- debuggee JVM's JDWP address, which com.microsoft.java.debug reads from the
 -- attach body as `hostName`/`port` (not `host`).
 
----@type ezdap.AdapterDef
+---@type ndebug.AdapterDef
 return {
     host     = "127.0.0.1",
     port     = 0,
@@ -23,9 +23,9 @@ return {
             },
             -- Two host/port pairs, and they are not the same connection: the body's
             -- names the JDWP port the debuggee exposes, the second return the
-            -- java-debug server ezdap itself dials.
+            -- java-debug server ndebug itself dials.
             build = function(inputs)
-                local shared = require("ezdap.shared")
+                local shared = require("ndebug.shared")
                 local jdwp_port, err = shared.resolve_port(inputs.jdwp_port)
                 if err then return nil, err end
                 local server_port, server_err = shared.resolve_port(inputs.server_port)

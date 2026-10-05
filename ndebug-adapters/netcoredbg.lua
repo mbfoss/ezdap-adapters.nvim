@@ -23,14 +23,14 @@ local netcoredbg_bins = {
 -- what makes it speak DAP at all.
 local netcoredbg_args = { "--interpreter=vscode" }
 
----@type ezdap.AdapterDef
+---@type ndebug.AdapterDef
 return {
     -- Nothing to spawn - netcoredbg speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at whatever
     -- it finds.
     setup = function(config, _, callback)
-        local shared = require("ezdap.shared")
+        local shared = require("ndebug.shared")
         local exe, tried = shared.resolve_path(netcoredbg_bins, shared.is_executable)
         if not exe then
             return callback("netcoredbg not found (unpack its release, or install it via mason); tried " ..
@@ -55,7 +55,7 @@ return {
                 enable_step_filtering = { type = "boolean", description = "step over property accessors and operators (default true)" },
             },
             build = function(inputs)
-                local shared = require("ezdap.shared")
+                local shared = require("ndebug.shared")
                 local program, args = shared.split_command(inputs.command)
                 return {
                     program             = program,
@@ -77,7 +77,7 @@ return {
                 pid = { type = "integer", description = "process id to attach to" },
             },
             build = function(inputs)
-                local pid, err = require("ezdap.shared").resolve_pid(inputs.pid)
+                local pid, err = require("ndebug.shared").resolve_pid(inputs.pid)
                 if not pid then return nil, err end
                 return {
                     processId = pid,
