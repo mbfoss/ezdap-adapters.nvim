@@ -44,23 +44,23 @@ return {
                 source_map      = { type = "map", completion = "dir", description = "source path remappings, from=to" },
                 init_commands   = { type = "list", description = "LLDB commands run at debugger startup" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
-                local program, args = shared.split_command(inputs.command)
+                local program, args = shared.split_command(parameters.command)
                 return {
                     name          = "lldb",
                     type          = "lldb-dap",
                     program       = program,
                     args          = args,
-                    cwd           = shared.normalize_path(inputs.cwd),
-                    env           = inputs.env,
-                    stopOnEntry   = inputs.stop_on_entry,
-                    console       = inputs.console,
+                    cwd           = shared.normalize_path(parameters.cwd),
+                    env           = parameters.env,
+                    stopOnEntry   = parameters.stop_on_entry,
+                    console       = parameters.console,
                     -- Unset means the default, so only an explicit false turns it off.
-                    runInTerminal = inputs.run_in_terminal ~= false,
-                    sourcePath    = shared.normalize_path(inputs.source_path),
-                    sourceMap     = inputs.source_map and vim.tbl_map(shared.normalize_path, inputs.source_map) or nil,
-                    initCommands  = inputs.init_commands,
+                    runInTerminal = parameters.run_in_terminal ~= false,
+                    sourcePath    = shared.normalize_path(parameters.source_path),
+                    sourceMap     = parameters.source_map and vim.tbl_map(shared.normalize_path, parameters.source_map) or nil,
+                    initCommands  = parameters.init_commands,
                 }
             end,
         },
@@ -73,17 +73,17 @@ return {
                 source_map    = { type = "map", completion = "dir", description = "source path remappings, from=to" },
                 init_commands = { type = "list", description = "LLDB commands run at debugger startup" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
-                local pid, err = shared.resolve_pid(inputs.pid)
+                local pid, err = shared.resolve_pid(parameters.pid)
                 if not pid then return nil, err end
                 return {
                     name         = "lldb",
                     type         = "lldb-dap",
                     pid          = pid,
-                    sourcePath   = shared.normalize_path(inputs.source_path),
-                    sourceMap    = inputs.source_map and vim.tbl_map(shared.normalize_path, inputs.source_map) or nil,
-                    initCommands = inputs.init_commands,
+                    sourcePath   = shared.normalize_path(parameters.source_path),
+                    sourceMap    = parameters.source_map and vim.tbl_map(shared.normalize_path, parameters.source_map) or nil,
+                    initCommands = parameters.init_commands,
                 }
             end,
         },
@@ -97,16 +97,16 @@ return {
                 source_map    = { type = "map", completion = "dir", description = "source path remappings, from=to" },
                 init_commands = { type = "list", description = "LLDB commands run at debugger startup" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
                 return {
                     name         = "lldb",
                     type         = "lldb-dap",
-                    program      = shared.normalize_path(inputs.program),
-                    waitFor      = inputs.wait_for,
-                    sourcePath   = shared.normalize_path(inputs.source_path),
-                    sourceMap    = inputs.source_map and vim.tbl_map(shared.normalize_path, inputs.source_map) or nil,
-                    initCommands = inputs.init_commands,
+                    program      = shared.normalize_path(parameters.program),
+                    waitFor      = parameters.wait_for,
+                    sourcePath   = shared.normalize_path(parameters.source_path),
+                    sourceMap    = parameters.source_map and vim.tbl_map(shared.normalize_path, parameters.source_map) or nil,
+                    initCommands = parameters.init_commands,
                 }
             end,
         },
@@ -119,15 +119,15 @@ return {
                 source_path = { type = "string", completion = "dir", description = "source root to remap ./ to" },
                 source_map  = { type = "map", completion = "dir", description = "source path remappings, from=to" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
                 return {
                     name       = "lldb",
                     type       = "lldb-dap",
-                    program    = shared.normalize_path(inputs.program),
-                    coreFile   = shared.normalize_path(inputs.corefile),
-                    sourcePath = shared.normalize_path(inputs.source_path),
-                    sourceMap  = inputs.source_map and vim.tbl_map(shared.normalize_path, inputs.source_map) or nil,
+                    program    = shared.normalize_path(parameters.program),
+                    coreFile   = shared.normalize_path(parameters.corefile),
+                    sourcePath = shared.normalize_path(parameters.source_path),
+                    sourceMap  = parameters.source_map and vim.tbl_map(shared.normalize_path, parameters.source_map) or nil,
                 }
             end,
         },
@@ -140,17 +140,17 @@ return {
                 source_path = { type = "string", completion = "dir", description = "source root to remap ./ to" },
                 source_map  = { type = "map", completion = "dir", description = "source path remappings, from=to" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
-                local port, err = shared.resolve_port(inputs.port)
+                local port, err = shared.resolve_port(parameters.port)
                 if err then return nil, err end
                 return {
                     name                = "lldb",
                     type                = "lldb-dap",
-                    ["gdb-remote-host"] = inputs.host,
+                    ["gdb-remote-host"] = parameters.host,
                     ["gdb-remote-port"] = port,
-                    sourcePath          = shared.normalize_path(inputs.source_path),
-                    sourceMap           = inputs.source_map and vim.tbl_map(shared.normalize_path, inputs.source_map) or nil,
+                    sourcePath          = shared.normalize_path(parameters.source_path),
+                    sourceMap           = parameters.source_map and vim.tbl_map(shared.normalize_path, parameters.source_map) or nil,
                 }
             end,
         },

@@ -51,30 +51,30 @@ local function _inputs(...)
     return out
 end
 
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _source_body(inputs)
+local function _source_body(parameters)
     local params = {}
-    params.sourceMaps                = inputs.source_maps
-    params.sourceMapPathOverrides    = inputs.source_map_path_overrides
-    params.resolveSourceMapLocations = inputs.resolve_source_map_locations
-    params.outFiles                  = inputs.out_files
-    params.skipFiles                 = inputs.skip_files
-    params.smartStep                 = inputs.smart_step
+    params.sourceMaps                = parameters.source_maps
+    params.sourceMapPathOverrides    = parameters.source_map_path_overrides
+    params.resolveSourceMapLocations = parameters.resolve_source_map_locations
+    params.outFiles                  = parameters.out_files
+    params.skipFiles                 = parameters.skip_files
+    params.smartStep                 = parameters.smart_step
     return params
 end
 
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _node_body(inputs)
+local function _node_body(parameters)
     local shared = require("ndebug.shared")
-    local params = _source_body(inputs)
+    local params = _source_body(parameters)
     params.type                     = "pwa-node"
-    params.cwd                      = shared.normalize_path(inputs.cwd)
-    params.env                      = inputs.env
-    params.envFile                  = shared.normalize_path(inputs.env_file)
-    params.restart                  = inputs.restart
-    params.autoAttachChildProcesses = inputs.auto_attach_child_processes
+    params.cwd                      = shared.normalize_path(parameters.cwd)
+    params.env                      = parameters.env
+    params.envFile                  = shared.normalize_path(parameters.env_file)
+    params.restart                  = parameters.restart
+    params.autoAttachChildProcesses = parameters.auto_attach_child_processes
     return params
 end
 
@@ -93,13 +93,13 @@ local _modes = {
             stop_on_entry      = { type = "boolean", description = "break at program entry" },
             console            = { type = "string", completion = { "internalConsole", "integratedTerminal", "externalTerminal" }, description = "where to run the debuggee" },
         }),
-        build = function(inputs)
-            local params = _node_body(inputs)
-            params.program, params.args = require("ndebug.shared").split_command(inputs.command)
-            params.runtimeExecutable = inputs.runtime_executable
-            params.runtimeArgs       = inputs.runtime_args
-            params.stopOnEntry       = inputs.stop_on_entry
-            params.console           = inputs.console
+        build = function(parameters)
+            local params = _node_body(parameters)
+            params.program, params.args = require("ndebug.shared").split_command(parameters.command)
+            params.runtimeExecutable = parameters.runtime_executable
+            params.runtimeArgs       = parameters.runtime_args
+            params.stopOnEntry       = parameters.stop_on_entry
+            params.console           = parameters.console
             return params
         end,
     },
@@ -113,13 +113,13 @@ local _modes = {
             attach_existing_children = { type = "boolean", description = "also attach to already-spawned child processes" },
             continue_on_attach       = { type = "boolean", description = "resume a program waiting on --inspect-brk" },
         }),
-        build = function(inputs)
-            local pid, err = require("ndebug.shared").resolve_pid(inputs.pid)
+        build = function(parameters)
+            local pid, err = require("ndebug.shared").resolve_pid(parameters.pid)
             if not pid then return nil, err end
-            local params = _node_body(inputs)
+            local params = _node_body(parameters)
             params.processId              = pid
-            params.attachExistingChildren = inputs.attach_existing_children
-            params.continueOnAttach       = inputs.continue_on_attach
+            params.attachExistingChildren = parameters.attach_existing_children
+            params.continueOnAttach       = parameters.continue_on_attach
             return params
         end,
     },
@@ -135,17 +135,17 @@ local _modes = {
             attach_existing_children = { type = "boolean", description = "also attach to already-spawned child processes" },
             continue_on_attach       = { type = "boolean", description = "resume a program waiting on --inspect-brk" },
         }),
-        build = function(inputs)
+        build = function(parameters)
             local shared = require("ndebug.shared")
-            local port, err = shared.resolve_port(inputs.port)
+            local port, err = shared.resolve_port(parameters.port)
             if err then return nil, err end
-            local params = _node_body(inputs)
-            params.address                = inputs.host
+            local params = _node_body(parameters)
+            params.address                = parameters.host
             params.port                   = port
-            params.localRoot              = shared.normalize_path(inputs.local_root)
-            params.remoteRoot             = inputs.remote_root
-            params.attachExistingChildren = inputs.attach_existing_children
-            params.continueOnAttach       = inputs.continue_on_attach
+            params.localRoot              = shared.normalize_path(parameters.local_root)
+            params.remoteRoot             = parameters.remote_root
+            params.attachExistingChildren = parameters.attach_existing_children
+            params.continueOnAttach       = parameters.continue_on_attach
             return params
         end,
     },
@@ -162,16 +162,16 @@ local _modes = {
             runtime_executable = { type = "string", description = "'stable', 'canary', or a path to the browser executable" },
             runtime_args       = { type = "list", description = "arguments passed to the browser" },
         },
-        build = function(inputs)
+        build = function(parameters)
             local shared = require("ndebug.shared")
-            local params = _source_body(inputs)
+            local params = _source_body(parameters)
             params.type              = "pwa-chrome"
-            params.url               = inputs.url
-            params.webRoot           = shared.normalize_path(inputs.web_root)
-            params.pathMapping       = inputs.path_mapping and vim.tbl_map(shared.normalize_path, inputs.path_mapping) or nil
-            params.userDataDir       = shared.normalize_path(inputs.user_data_dir)
-            params.runtimeExecutable = inputs.runtime_executable
-            params.runtimeArgs       = inputs.runtime_args
+            params.url               = parameters.url
+            params.webRoot           = shared.normalize_path(parameters.web_root)
+            params.pathMapping       = parameters.path_mapping and vim.tbl_map(shared.normalize_path, parameters.path_mapping) or nil
+            params.userDataDir       = shared.normalize_path(parameters.user_data_dir)
+            params.runtimeExecutable = parameters.runtime_executable
+            params.runtimeArgs       = parameters.runtime_args
             return params
         end,
     },

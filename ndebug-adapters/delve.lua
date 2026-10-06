@@ -122,16 +122,16 @@ local function _inputs(...)
     return out
 end
 
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _any_mode_body(inputs)
+local function _any_mode_body(parameters)
     local params = {}
-    params.dlvCwd = require("ndebug.shared").normalize_path(inputs.dlv_cwd)
-    params.env    = inputs.env
+    params.dlvCwd = require("ndebug.shared").normalize_path(parameters.dlv_cwd)
+    params.env    = parameters.env
     -- delve wants a list of {from, to} pairs, not a flat mapping.
-    if inputs.substitute_path then
+    if parameters.substitute_path then
         local rules = {}
-        for from, to in pairs(inputs.substitute_path) do
+        for from, to in pairs(parameters.substitute_path) do
             rules[#rules + 1] = { from = from, to = to }
         end
         params.substitutePath = rules
@@ -139,32 +139,32 @@ local function _any_mode_body(inputs)
     return params
 end
 
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _process_body(inputs)
+local function _process_body(parameters)
     local shared = require("ndebug.shared")
-    local params = _any_mode_body(inputs)
-    params.program, params.args = shared.split_command(inputs.command)
-    params.cwd                  = shared.normalize_path(inputs.cwd)
-    params.backend              = inputs.backend
-    params.noDebug              = inputs.no_debug
+    local params = _any_mode_body(parameters)
+    params.program, params.args = shared.split_command(parameters.command)
+    params.cwd                  = shared.normalize_path(parameters.cwd)
+    params.backend              = parameters.backend
+    params.noDebug              = parameters.no_debug
     return params
 end
 
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _build_body(inputs)
-    local params = _process_body(inputs)
-    params.buildFlags           = inputs.build_flags
-    params.output               = require("ndebug.shared").normalize_path(inputs.output)
-    params.stopOnEntry          = inputs.stop_on_entry
-    params.stackTraceDepth      = inputs.stack_trace_depth
-    params.showGlobalVariables  = inputs.show_global_variables
-    params.showRegisters        = inputs.show_registers
-    params.showPprofLabels      = inputs.show_pprof_labels
-    params.showRawStrings       = inputs.show_raw_strings
-    params.hideSystemGoroutines = inputs.hide_system_goroutines
-    params.goroutineFilters     = inputs.goroutine_filters
+local function _build_body(parameters)
+    local params = _process_body(parameters)
+    params.buildFlags           = parameters.build_flags
+    params.output               = require("ndebug.shared").normalize_path(parameters.output)
+    params.stopOnEntry          = parameters.stop_on_entry
+    params.stackTraceDepth      = parameters.stack_trace_depth
+    params.showGlobalVariables  = parameters.show_global_variables
+    params.showRegisters        = parameters.show_registers
+    params.showPprofLabels      = parameters.show_pprof_labels
+    params.showRawStrings       = parameters.show_raw_strings
+    params.hideSystemGoroutines = parameters.hide_system_goroutines
+    params.goroutineFilters     = parameters.goroutine_filters
     return params
 end
 
@@ -178,8 +178,8 @@ return {
             description = "build and debug a Go package/binary",
             request = "launch",
             inputs = _inputs(_process_inputs, _build_inputs),
-            build = function(inputs)
-                local params = _build_body(inputs)
+            build = function(parameters)
+                local params = _build_body(parameters)
                 params.mode = "debug"
                 return params
             end,
@@ -188,8 +188,8 @@ return {
             description = "build and debug a Go test package",
             request = "launch",
             inputs = _inputs(_process_inputs, _build_inputs),
-            build = function(inputs)
-                local params = _build_body(inputs)
+            build = function(parameters)
+                local params = _build_body(parameters)
                 params.mode = "test"
                 return params
             end,
@@ -198,8 +198,8 @@ return {
             description = "debug a pre-built Go binary",
             request = "launch",
             inputs = _inputs(_process_inputs),
-            build = function(inputs)
-                local params = _process_body(inputs)
+            build = function(parameters)
+                local params = _process_body(parameters)
                 params.mode = "exec"
                 return params
             end,
@@ -213,12 +213,12 @@ return {
                 program        = { type = "string", completion = "file", required = true, description = "binary the trace was recorded from" },
                 trace_dir_path = { type = "string", completion = "dir", required = true, description = "rr trace directory to replay" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
-                local params = _any_mode_body(inputs)
+                local params = _any_mode_body(parameters)
                 params.mode = "replay"
-                params.program      = shared.normalize_path(inputs.program)
-                params.traceDirPath = shared.normalize_path(inputs.trace_dir_path)
+                params.program      = shared.normalize_path(parameters.program)
+                params.traceDirPath = shared.normalize_path(parameters.trace_dir_path)
                 return params
             end,
         },
@@ -229,12 +229,12 @@ return {
                 program       = { type = "string", completion = "file", required = true, description = "binary that produced the core" },
                 corefile_path = { type = "string", completion = "file", required = true, description = "core dump to load" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
-                local params = _any_mode_body(inputs)
+                local params = _any_mode_body(parameters)
                 params.mode = "core"
-                params.program      = shared.normalize_path(inputs.program)
-                params.corefilePath = shared.normalize_path(inputs.corefile_path)
+                params.program      = shared.normalize_path(parameters.program)
+                params.corefilePath = shared.normalize_path(parameters.corefile_path)
                 return params
             end,
         },
@@ -248,13 +248,13 @@ return {
                 pid     = { type = "integer", description = "process id to attach to" },
                 backend = { type = "string", completion = { "default", "native", "lldb", "rr" }, description = "debugger backend" },
             },
-            build = function(inputs)
-                local pid, err = require("ndebug.shared").resolve_pid(inputs.pid)
+            build = function(parameters)
+                local pid, err = require("ndebug.shared").resolve_pid(parameters.pid)
                 if not pid then return nil, err end
                 return {
                     mode      = "local",
                     processId = pid,
-                    backend   = inputs.backend,
+                    backend   = parameters.backend,
                 }
             end,
         },

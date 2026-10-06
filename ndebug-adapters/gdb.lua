@@ -110,17 +110,17 @@ return {
                 stop_at_main  = { type = "boolean", description = "break at the start of main" },
                 ada_charset   = { type = "string", description = "Ada source character set" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
-                local program, args = shared.split_command(inputs.command)
+                local program, args = shared.split_command(parameters.command)
                 return {
                     program                         = program,
                     args                            = args,
-                    cwd                             = shared.normalize_path(inputs.cwd),
-                    env                             = vim.tbl_extend("force", vim.fn.environ(), inputs.env or {}), -- gdb does not merge env variables on it's own (unlike lldb)
-                    stopOnEntry                     = inputs.stop_on_entry,
-                    stopAtBeginningOfMainSubprogram = inputs.stop_at_main,
-                    adaSourceCharset                = inputs.ada_charset,
+                    cwd                             = shared.normalize_path(parameters.cwd),
+                    env                             = vim.tbl_extend("force", vim.fn.environ(), parameters.env or {}), -- gdb does not merge env variables on it's own (unlike lldb)
+                    stopOnEntry                     = parameters.stop_on_entry,
+                    stopAtBeginningOfMainSubprogram = parameters.stop_at_main,
+                    adaSourceCharset                = parameters.ada_charset,
                 }
             end,
         },
@@ -132,14 +132,14 @@ return {
                 program     = { type = "string", completion = "file", description = "local binary for symbols" },
                 ada_charset = { type = "string", description = "Ada source character set" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
-                local pid, err = shared.resolve_pid(inputs.pid)
+                local pid, err = shared.resolve_pid(parameters.pid)
                 if not pid then return nil, err end
                 return {
                     pid              = pid,
-                    program          = shared.normalize_path(inputs.program),
-                    adaSourceCharset = inputs.ada_charset,
+                    program          = shared.normalize_path(parameters.program),
+                    adaSourceCharset = parameters.ada_charset,
                 }
             end,
         },
@@ -152,11 +152,11 @@ return {
                 program     = { type = "string", completion = "file", description = "local binary for symbols" },
                 ada_charset = { type = "string", description = "Ada source character set" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 return {
-                    target           = inputs.connection,
-                    program          = require("ndebug.shared").normalize_path(inputs.program),
-                    adaSourceCharset = inputs.ada_charset,
+                    target           = parameters.connection,
+                    program          = require("ndebug.shared").normalize_path(parameters.program),
+                    adaSourceCharset = parameters.ada_charset,
                 }
             end,
         },
@@ -168,12 +168,12 @@ return {
                 program     = { type = "string", completion = "file", description = "executable that produced the core" },
                 ada_charset = { type = "string", description = "Ada source character set" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
                 return {
-                    coreFile         = shared.normalize_path(inputs.corefile),
-                    program          = shared.normalize_path(inputs.program),
-                    adaSourceCharset = inputs.ada_charset,
+                    coreFile         = shared.normalize_path(parameters.corefile),
+                    program          = shared.normalize_path(parameters.program),
+                    adaSourceCharset = parameters.ada_charset,
                 }
             end,
         },

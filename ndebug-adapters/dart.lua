@@ -91,30 +91,30 @@ local function _inputs(...)
     return out
 end
 
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _common_body(inputs)
+local function _common_body(parameters)
     local shared = require("ndebug.shared")
     local params = {}
-    params.cwd                           = shared.normalize_path(inputs.cwd)
-    params.env                           = inputs.env
-    params.additionalProjectPaths        = shared.normalize_paths(inputs.additional_project_paths)
-    params.debugSdkLibraries             = inputs.debug_sdk_libraries
-    params.debugExternalPackageLibraries = inputs.debug_external_package_libraries
-    params.showGettersInDebugViews       = inputs.show_getters_in_debug_views
-    params.evaluateGettersInDebugViews   = inputs.evaluate_getters_in_debug_views
-    params.evaluateToStringInDebugViews  = inputs.evaluate_to_string_in_debug_views
-    params.allowAnsiColorOutput          = inputs.allow_ansi_color_output
+    params.cwd                           = shared.normalize_path(parameters.cwd)
+    params.env                           = parameters.env
+    params.additionalProjectPaths        = shared.normalize_paths(parameters.additional_project_paths)
+    params.debugSdkLibraries             = parameters.debug_sdk_libraries
+    params.debugExternalPackageLibraries = parameters.debug_external_package_libraries
+    params.showGettersInDebugViews       = parameters.show_getters_in_debug_views
+    params.evaluateGettersInDebugViews   = parameters.evaluate_getters_in_debug_views
+    params.evaluateToStringInDebugViews  = parameters.evaluate_to_string_in_debug_views
+    params.allowAnsiColorOutput          = parameters.allow_ansi_color_output
     return params
 end
 
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _tool_body(inputs)
-    local params = _common_body(inputs)
-    params.toolArgs               = inputs.tool_args
-    params.customTool             = require("ndebug.shared").normalize_path(inputs.custom_tool)
-    params.customToolReplacesArgs = inputs.custom_tool_replaces_args
+local function _tool_body(parameters)
+    local params = _common_body(parameters)
+    params.toolArgs               = parameters.tool_args
+    params.customTool             = require("ndebug.shared").normalize_path(parameters.custom_tool)
+    params.customToolReplacesArgs = parameters.custom_tool_replaces_args
     return params
 end
 
@@ -123,14 +123,14 @@ end
 ---is run with). Flutter leaves `program` optional - without one the tool runs the
 ---project's own entry point - so an unset command assigns nothing rather than an
 ---empty program.
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _launch_body(inputs)
-    local params = _tool_body(inputs)
-    if inputs.command then
-        params.program, params.args = require("ndebug.shared").split_command(inputs.command)
+local function _launch_body(parameters)
+    local params = _tool_body(parameters)
+    if parameters.command then
+        params.program, params.args = require("ndebug.shared").split_command(parameters.command)
     end
-    params.noDebug = inputs.no_debug
+    params.noDebug = parameters.no_debug
     return params
 end
 
@@ -149,13 +149,13 @@ local _modes = {
             vm_service_port    = { type = "integer", description = "fixed port for the debuggee's VM Service" },
             console            = { type = "string", completion = { "internalConsole", "terminal", "externalTerminal" }, description = "where the debuggee runs; a terminal is what gives it stdin" },
         }),
-        build = function(inputs)
-            local port, err = require("ndebug.shared").resolve_port(inputs.vm_service_port)
+        build = function(parameters)
+            local port, err = require("ndebug.shared").resolve_port(parameters.vm_service_port)
             if err then return nil, err end
-            local params = _launch_body(inputs)
-            params.vmAdditionalArgs = inputs.vm_additional_args
+            local params = _launch_body(parameters)
+            params.vmAdditionalArgs = parameters.vm_additional_args
             params.vmServicePort    = port
-            params.console          = inputs.console
+            params.console          = parameters.console
             return params
         end,
     },
@@ -170,10 +170,10 @@ local _modes = {
             vm_additional_args = { type = "list", description = "arguments passed straight to the Dart VM, before the tool's own" },
             console            = { type = "string", completion = { "internalConsole", "terminal", "externalTerminal" }, description = "where the tests run; a terminal is what gives them stdin" },
         }),
-        build = function(inputs)
-            local params = _launch_body(inputs)
-            params.vmAdditionalArgs = inputs.vm_additional_args
-            params.console          = inputs.console
+        build = function(parameters)
+            local params = _launch_body(parameters)
+            params.vmAdditionalArgs = parameters.vm_additional_args
+            params.console          = parameters.console
             return params
         end,
     },
@@ -184,10 +184,10 @@ local _modes = {
         description = "attach to a running Dart VM Service",
         request = "attach",
         inputs = _inputs(_attach_inputs),
-        build = function(inputs)
-            local params = _common_body(inputs)
-            params.vmServiceUri      = inputs.vm_service_uri
-            params.vmServiceInfoFile = require("ndebug.shared").normalize_path(inputs.vm_service_info_file)
+        build = function(parameters)
+            local params = _common_body(parameters)
+            params.vmServiceUri      = parameters.vm_service_uri
+            params.vmServiceInfoFile = require("ndebug.shared").normalize_path(parameters.vm_service_info_file)
             return params
         end,
     },
@@ -201,8 +201,8 @@ local _modes = {
             command  = { type = "string", completion = "command", required = false, description = "entry point to debug, plus its arguments (default: the project's own)" },
             no_debug = { type = "boolean", description = "run the app without debugging it" },
         }),
-        build = function(inputs)
-            local params = _launch_body(inputs)
+        build = function(parameters)
+            local params = _launch_body(parameters)
             return params
         end,
     },
@@ -213,8 +213,8 @@ local _modes = {
             command  = { type = "string", completion = "command", required = false, description = "test file to debug, plus its arguments (default: every test)" },
             no_debug = { type = "boolean", description = "run the tests without debugging them" },
         }),
-        build = function(inputs)
-            local params = _launch_body(inputs)
+        build = function(parameters)
+            local params = _launch_body(parameters)
             return params
         end,
     },
@@ -226,12 +226,12 @@ local _modes = {
         inputs = _inputs(_tool_inputs, _attach_inputs, {
             program = { type = "string", completion = "file", description = "entry point of the running app, for resolving its sources" },
         }),
-        build = function(inputs)
+        build = function(parameters)
             local shared = require("ndebug.shared")
-            local params = _tool_body(inputs)
-            params.vmServiceUri      = inputs.vm_service_uri
-            params.vmServiceInfoFile = shared.normalize_path(inputs.vm_service_info_file)
-            params.program           = shared.normalize_path(inputs.program)
+            local params = _tool_body(parameters)
+            params.vmServiceUri      = parameters.vm_service_uri
+            params.vmServiceInfoFile = shared.normalize_path(parameters.vm_service_info_file)
+            params.program           = shared.normalize_path(parameters.program)
             return params
         end,
     },

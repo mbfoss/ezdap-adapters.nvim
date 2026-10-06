@@ -24,20 +24,20 @@ return {
             -- Two host/port pairs, and they are not the same connection: the body's
             -- names the JDWP port the debuggee exposes, the second return the
             -- java-debug server ndebug itself dials.
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
-                local jdwp_port, err = shared.resolve_port(inputs.jdwp_port)
+                local jdwp_port, err = shared.resolve_port(parameters.jdwp_port)
                 if err then return nil, err end
-                local server_port, server_err = shared.resolve_port(inputs.server_port)
+                local server_port, server_err = shared.resolve_port(parameters.server_port)
                 if server_err then return nil, server_err end
                 return {
-                    hostName    = inputs.jdwp_host or "127.0.0.1",
+                    hostName    = parameters.jdwp_host or "127.0.0.1",
                     port        = jdwp_port,
-                    projectName = inputs.project_name,
-                    sourcePaths = shared.normalize_paths(inputs.source_paths),
-                    timeout     = inputs.timeout or 30000,
+                    projectName = parameters.project_name,
+                    sourcePaths = shared.normalize_paths(parameters.source_paths),
+                    timeout     = parameters.timeout or 30000,
                 }, {
-                    host = inputs.server_host or "127.0.0.1",
+                    host = parameters.server_host or "127.0.0.1",
                     port = server_port,
                 }
             end,

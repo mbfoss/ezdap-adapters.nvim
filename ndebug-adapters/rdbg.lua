@@ -149,31 +149,31 @@ local function _inputs(...)
     return out
 end
 
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _common_body(inputs)
+local function _common_body(parameters)
     local params = {}
-    params.nonstop = not inputs.stop_on_entry
+    params.nonstop = not parameters.stop_on_entry
     return params
 end
 
 ---The body and spawn description shared by `script`/`command`,
 ---which differ only in whether rdbg is put in command mode.
----@param inputs  table<string, any>
+---@param parameters  table<string, any>
 ---@param command_mode boolean
-local function _spawn_body(inputs, command_mode)
-    local params = _common_body(inputs)
+local function _spawn_body(parameters, command_mode)
+    local params = _common_body(parameters)
     -- We started the debuggee ourselves, so its paths are this machine's paths.
     params.localfs = true
     local shared = require("ndebug.shared")
-    local program, args = shared.split_command(inputs.command)
+    local program, args = shared.split_command(parameters.command)
     params[RDBG_KEY] = {
         program      = program,
         args         = args,
-        cwd          = shared.normalize_path(inputs.cwd),
-        env          = inputs.env,
-        use_bundler  = inputs.use_bundler,
-        rdbg_args    = inputs.rdbg_args,
+        cwd          = shared.normalize_path(parameters.cwd),
+        env          = parameters.env,
+        use_bundler  = parameters.use_bundler,
+        rdbg_args    = parameters.rdbg_args,
         command_mode = command_mode,
     }
     return params
@@ -189,8 +189,8 @@ local _modes = {
         inputs = _inputs(_spawn_inputs, {
             command = { type = "string", completion = "command", required = true, description = "Ruby script to debug, plus its arguments" },
         }),
-        build = function(inputs)
-            local params = _spawn_body(inputs, false)
+        build = function(parameters)
+            local params = _spawn_body(parameters, false)
             return params
         end,
     },
@@ -203,8 +203,8 @@ local _modes = {
         inputs = _inputs(_spawn_inputs, {
             command = { type = "string", completion = "command", required = true, description = "command to debug, plus its arguments" },
         }),
-        build = function(inputs)
-            local params = _spawn_body(inputs, true)
+        build = function(parameters)
+            local params = _spawn_body(parameters, true)
             return params
         end,
     },
@@ -221,12 +221,12 @@ local _modes = {
             local_fs      = { type = "boolean", description = "the debuggee shares this filesystem (default true)" },
             path_mappings = { type = "map", completion = "dir", description = "source path mappings, remote=local" },
         },
-        build = function(inputs)
+        build = function(parameters)
             local shared = require("ndebug.shared")
-            local port, err = shared.resolve_port(inputs.port)
+            local port, err = shared.resolve_port(parameters.port)
             if err then return nil, err end
-            local params = _common_body(inputs)
-            local path_mappings = inputs.path_mappings and vim.tbl_map(shared.normalize_path, inputs.path_mappings)
+            local params = _common_body(parameters)
+            local path_mappings = parameters.path_mappings and vim.tbl_map(shared.normalize_path, parameters.path_mappings)
             if path_mappings then
                 -- The gem takes one string of "remote:local" pairs and matches by
                 -- prefix, first hit winning, so the longest prefix goes first -
@@ -238,9 +238,9 @@ local _modes = {
                 end, remotes)
                 params.localfsMap = table.concat(pairs_, ",")
             else
-                params.localfs = inputs.local_fs == nil and true or inputs.local_fs
+                params.localfs = parameters.local_fs == nil and true or parameters.local_fs
             end
-            params[RDBG_KEY] = { host = inputs.host, port = port }
+            params[RDBG_KEY] = { host = parameters.host, port = port }
             return params
         end,
     },

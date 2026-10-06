@@ -54,17 +54,17 @@ return {
                 just_my_code          = { type = "boolean", description = "debug only user code, skipping framework code (default true)" },
                 enable_step_filtering = { type = "boolean", description = "step over property accessors and operators (default true)" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
-                local program, args = shared.split_command(inputs.command)
+                local program, args = shared.split_command(parameters.command)
                 return {
                     program             = program,
                     args                = args,
-                    cwd                 = shared.normalize_path(inputs.cwd),
-                    env                 = inputs.env,
-                    stopAtEntry         = inputs.stop_at_entry,
-                    justMyCode          = inputs.just_my_code,
-                    enableStepFiltering = inputs.enable_step_filtering,
+                    cwd                 = shared.normalize_path(parameters.cwd),
+                    env                 = parameters.env,
+                    stopAtEntry         = parameters.stop_at_entry,
+                    justMyCode          = parameters.just_my_code,
+                    enableStepFiltering = parameters.enable_step_filtering,
                 }
             end,
         },
@@ -76,8 +76,8 @@ return {
             inputs = {
                 pid = { type = "integer", description = "process id to attach to" },
             },
-            build = function(inputs)
-                local pid, err = require("ndebug.shared").resolve_pid(inputs.pid)
+            build = function(parameters)
+                local pid, err = require("ndebug.shared").resolve_pid(parameters.pid)
                 if not pid then return nil, err end
                 return {
                     processId = pid,

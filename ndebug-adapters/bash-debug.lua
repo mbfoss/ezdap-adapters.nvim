@@ -72,22 +72,22 @@ return {
                 env           = { type = "map", description = "environment variables" },
                 terminal_kind = { type = "string", completion = { "integrated", "external", "debugConsole" }, description = "where the debuggee's stdio goes (default integrated)" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
                 local lib_dir = _resolve_lib_dir()
                 return {
                     type          = "bashdb",
                     name          = "Launch Bash Script",
-                    program       = shared.normalize_path(inputs.script),
-                    cwd           = shared.normalize_path(inputs.cwd),
-                    env           = inputs.env,
+                    program       = shared.normalize_path(parameters.script),
+                    cwd           = shared.normalize_path(parameters.cwd),
+                    env           = parameters.env,
                     pathBash      = bash_tools.bash,
                     pathBashdb    = _bashdb_script(lib_dir),
                     pathBashdbLib = lib_dir,
                     pathCat       = bash_tools.cat,
                     pathMkfifo    = bash_tools.mkfifo,
                     pathPkill     = bash_tools.pkill,
-                    terminalKind  = inputs.terminal_kind or "integrated",
+                    terminalKind  = parameters.terminal_kind or "integrated",
                 }
             end,
         },

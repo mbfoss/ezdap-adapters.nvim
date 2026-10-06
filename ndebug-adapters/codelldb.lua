@@ -49,24 +49,24 @@ local function _inputs(extra)
 end
 
 ---Assign the common attributes, plus the `name`/`type` every codelldb body carries.
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _common_body(inputs)
+local function _common_body(parameters)
     local shared = require("ndebug.shared")
     local params = {}
     params.name                 = "codelldb"
     params.type                 = "lldb"
-    params.sourceMap            = inputs.source_map and vim.tbl_map(shared.normalize_path, inputs.source_map) or nil
-    params.relativePathBase     = shared.normalize_path(inputs.relative_path_base)
-    params.sourceLanguages      = inputs.source_languages
-    params.expressions          = inputs.expressions
-    params.breakpointMode       = inputs.breakpoint_mode
-    params.reverseDebugging     = inputs.reverse_debugging
-    params.initCommands         = inputs.init_commands
-    params.preRunCommands       = inputs.pre_run_commands
-    params.postRunCommands      = inputs.post_run_commands
-    params.preTerminateCommands = inputs.pre_terminate_commands
-    params.exitCommands         = inputs.exit_commands
+    params.sourceMap            = parameters.source_map and vim.tbl_map(shared.normalize_path, parameters.source_map) or nil
+    params.relativePathBase     = shared.normalize_path(parameters.relative_path_base)
+    params.sourceLanguages      = parameters.source_languages
+    params.expressions          = parameters.expressions
+    params.breakpointMode       = parameters.breakpoint_mode
+    params.reverseDebugging     = parameters.reverse_debugging
+    params.initCommands         = parameters.init_commands
+    params.preRunCommands       = parameters.pre_run_commands
+    params.postRunCommands      = parameters.post_run_commands
+    params.preTerminateCommands = parameters.pre_terminate_commands
+    params.exitCommands         = parameters.exit_commands
     return params
 end
 
@@ -97,16 +97,16 @@ return {
                 terminal      = { type = "string", completion = { "console", "integrated", "external" }, description = "where the debuggee's stdio goes" },
                 stop_on_entry = { type = "boolean", description = "break at program entry" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
-                local params = _common_body(inputs)
-                params.program, params.args = shared.split_command(inputs.command)
-                params.cwd         = shared.normalize_path(inputs.cwd)
-                params.env         = inputs.env
-                params.envFile     = shared.normalize_path(inputs.env_file)
-                params.stdio       = inputs.stdio
-                params.terminal    = inputs.terminal
-                params.stopOnEntry = inputs.stop_on_entry
+                local params = _common_body(parameters)
+                params.program, params.args = shared.split_command(parameters.command)
+                params.cwd         = shared.normalize_path(parameters.cwd)
+                params.env         = parameters.env
+                params.envFile     = shared.normalize_path(parameters.env_file)
+                params.stdio       = parameters.stdio
+                params.terminal    = parameters.terminal
+                params.stopOnEntry = parameters.stop_on_entry
                 return params
             end,
         },
@@ -118,14 +118,14 @@ return {
                 program       = { type = "string", completion = "file", description = "executable to read symbols from" },
                 stop_on_entry = { type = "boolean", description = "break immediately after attaching" },
             },
-            build = function(inputs)
+            build = function(parameters)
                 local shared = require("ndebug.shared")
-                local pid, err = shared.resolve_pid(inputs.pid)
+                local pid, err = shared.resolve_pid(parameters.pid)
                 if not pid then return nil, err end
-                local params = _common_body(inputs)
+                local params = _common_body(parameters)
                 params.pid         = pid
-                params.program     = shared.normalize_path(inputs.program)
-                params.stopOnEntry = inputs.stop_on_entry
+                params.program     = shared.normalize_path(parameters.program)
+                params.stopOnEntry = parameters.stop_on_entry
                 return params
             end,
         },
@@ -137,16 +137,16 @@ return {
                 wait_for      = { type = "boolean", description = "wait for the process to launch" },
                 stop_on_entry = { type = "boolean", description = "break immediately after attaching" },
             },
-            build = function(inputs)
-                local params = _common_body(inputs)
-                params.program     = require("ndebug.shared").normalize_path(inputs.program)
-                params.waitFor     = inputs.wait_for
-                params.stopOnEntry = inputs.stop_on_entry
+            build = function(parameters)
+                local params = _common_body(parameters)
+                params.program     = require("ndebug.shared").normalize_path(parameters.program)
+                params.waitFor     = parameters.wait_for
+                params.stopOnEntry = parameters.stop_on_entry
                 return params
             end,
         },
         -- A custom launch drives LLDB by command rather than by `program`, so both
-        -- inputs land inside a command string instead of a field of their own. One
+        -- parameters land inside a command string instead of a field of their own. One
         -- `target create` opens the core: it *is* the target, so there is no process
         -- to create afterwards - an empty `processCreateCommands` keeps codelldb from
         -- falling back to `process launch` and running the program for real.
@@ -157,11 +157,11 @@ return {
                 program  = { type = "string", completion = "file", description = "executable that produced the core (read from the core when unset)" },
                 corefile = { type = "string", completion = "file", required = true, description = "core file to load" },
             },
-            build = function(inputs)
-                local params = _common_body(inputs)
-                local target = inputs.program and ("target create %s --core %s")
-                    :format(_quoted(inputs.program), _quoted(inputs.corefile))
-                    or ("target create --core %s"):format(_quoted(inputs.corefile))
+            build = function(parameters)
+                local params = _common_body(parameters)
+                local target = parameters.program and ("target create %s --core %s")
+                    :format(_quoted(parameters.program), _quoted(parameters.corefile))
+                    or ("target create --core %s"):format(_quoted(parameters.corefile))
                 params.targetCreateCommands  = { target }
                 params.processCreateCommands = {}
                 return params
@@ -178,14 +178,14 @@ return {
             -- `host`/`port` are required for the same reason `core` always writes a
             -- `processCreateCommands`: without one codelldb runs `process launch` and
             -- debugs the program locally instead of the remote.
-            build = function(inputs)
-                local port, err = require("ndebug.shared").resolve_port(inputs.port)
+            build = function(parameters)
+                local port, err = require("ndebug.shared").resolve_port(parameters.port)
                 if err then return nil, err end
-                local params = _common_body(inputs)
-                if inputs.program then
-                    params.targetCreateCommands = { "target create " .. _quoted(inputs.program) }
+                local params = _common_body(parameters)
+                if parameters.program then
+                    params.targetCreateCommands = { "target create " .. _quoted(parameters.program) }
                 end
-                params.processCreateCommands = { ("gdb-remote %s:%d"):format(inputs.host, port) }
+                params.processCreateCommands = { ("gdb-remote %s:%d"):format(parameters.host, port) }
                 return params
             end,
         },

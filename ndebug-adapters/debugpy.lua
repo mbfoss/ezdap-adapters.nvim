@@ -115,24 +115,24 @@ end
 
 ---Assign the common attributes, plus the `type` every debugpy body carries.
 ---`justMyCode`/`showReturnValue` keep ndebug's defaults when left unset.
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _common_body(inputs)
+local function _common_body(parameters)
     local params = {}
     params.type            = "python"
-    params.justMyCode      = inputs.just_my_code == nil and false or inputs.just_my_code
-    params.showReturnValue = inputs.show_return_value == nil and true or inputs.show_return_value
-    params.redirectOutput  = inputs.redirect_output
-    params.subProcess      = inputs.sub_process
-    params.django          = inputs.django
-    params.jinja           = inputs.jinja
-    params.pyramid         = inputs.pyramid
-    params.gevent          = inputs.gevent
-    params.sudo            = inputs.sudo
-    params.logToFile       = inputs.log_to_file
-    if inputs.path_mappings then
+    params.justMyCode      = parameters.just_my_code == nil and false or parameters.just_my_code
+    params.showReturnValue = parameters.show_return_value == nil and true or parameters.show_return_value
+    params.redirectOutput  = parameters.redirect_output
+    params.subProcess      = parameters.sub_process
+    params.django          = parameters.django
+    params.jinja           = parameters.jinja
+    params.pyramid         = parameters.pyramid
+    params.gevent          = parameters.gevent
+    params.sudo            = parameters.sudo
+    params.logToFile       = parameters.log_to_file
+    if parameters.path_mappings then
         local mappings = {}
-        for local_root, remote_root in pairs(inputs.path_mappings) do
+        for local_root, remote_root in pairs(parameters.path_mappings) do
             mappings[#mappings + 1] = { localRoot = local_root, remoteRoot = remote_root }
         end
         params.pathMappings = mappings
@@ -150,15 +150,15 @@ local _launch_inputs = {
     stop_on_entry = { type = "boolean", description = "break at the first line of user code" },
 }
 
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table params
-local function _launch_body(inputs)
-    local params = _common_body(inputs)
-    params.cwd         = require("ndebug.shared").normalize_path(inputs.cwd)
-    params.env         = inputs.env
-    params.python      = inputs.python
-    params.console     = inputs.console
-    params.stopOnEntry = inputs.stop_on_entry
+local function _launch_body(parameters)
+    local params = _common_body(parameters)
+    params.cwd         = require("ndebug.shared").normalize_path(parameters.cwd)
+    params.env         = parameters.env
+    params.python      = parameters.python
+    params.console     = parameters.console
+    params.stopOnEntry = parameters.stop_on_entry
     return params
 end
 
@@ -178,9 +178,9 @@ return {
             inputs = _inputs(vim.tbl_extend("error", vim.deepcopy(_launch_inputs), {
                 command = { type = "string", completion = "command", required = true, description = "command line to debug" },
             })),
-            build = function(inputs)
-                local params = _launch_body(inputs)
-                params.program, params.args = require("ndebug.shared").split_command(inputs.command)
+            build = function(parameters)
+                local params = _launch_body(parameters)
+                params.program, params.args = require("ndebug.shared").split_command(parameters.command)
                 return params
             end,
         },
@@ -191,10 +191,10 @@ return {
                 module = { type = "string", required = true, description = "module name to debug" },
                 args   = { type = "list", description = "command line arguments passed to the module" },
             })),
-            build = function(inputs)
-                local params = _launch_body(inputs)
-                params.module = inputs.module
-                params.args   = inputs.args
+            build = function(parameters)
+                local params = _launch_body(parameters)
+                params.module = parameters.module
+                params.args   = parameters.args
                 return params
             end,
         },
@@ -205,10 +205,10 @@ return {
                 code = { type = "string", required = true, description = "Python code to debug" },
                 args = { type = "list", description = "command line arguments passed to the code" },
             })),
-            build = function(inputs)
-                local params = _launch_body(inputs)
-                params.code = inputs.code
-                params.args = inputs.args
+            build = function(parameters)
+                local params = _launch_body(parameters)
+                params.code = parameters.code
+                params.args = parameters.args
                 return params
             end,
         },
@@ -218,10 +218,10 @@ return {
             inputs = _inputs {
                 pid = { type = "integer", description = "process id to attach to" },
             },
-            build = function(inputs)
-                local pid, err = require("ndebug.shared").resolve_pid(inputs.pid)
+            build = function(parameters)
+                local pid, err = require("ndebug.shared").resolve_pid(parameters.pid)
                 if not pid then return nil, err end
-                local params = _common_body(inputs)
+                local params = _common_body(parameters)
                 params.processId = pid
                 return params
             end,
@@ -233,11 +233,11 @@ return {
                 host = { type = "string", required = true, description = "remote debugpy host" },
                 port = { type = "integer", required = true, description = "remote debugpy port" },
             },
-            build = function(inputs)
-                local port, err = require("ndebug.shared").resolve_port(inputs.port)
+            build = function(parameters)
+                local port, err = require("ndebug.shared").resolve_port(parameters.port)
                 if err then return nil, err end
-                local params = _common_body(inputs)
-                params.connect = { host = inputs.host, port = port }
+                local params = _common_body(parameters)
+                params.connect = { host = parameters.host, port = port }
                 return params
             end,
         },
@@ -250,11 +250,11 @@ return {
                 host = { type = "string", description = "host to listen on" },
                 port = { type = "integer", required = true, description = "port to listen on" },
             },
-            build = function(inputs)
-                local port, err = require("ndebug.shared").resolve_port(inputs.port)
+            build = function(parameters)
+                local port, err = require("ndebug.shared").resolve_port(parameters.port)
                 if err then return nil, err end
-                local params = _common_body(inputs)
-                params.listen = { host = inputs.host or "127.0.0.1", port = port }
+                local params = _common_body(parameters)
+                params.listen = { host = parameters.host or "127.0.0.1", port = port }
                 return params
             end,
         },

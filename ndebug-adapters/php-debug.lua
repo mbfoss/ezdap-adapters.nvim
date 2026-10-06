@@ -54,39 +54,39 @@ end
 
 ---Both ports are held to their range here, so every mode's `build` reports a bad
 ---one the same way - the `nil, err` pair an abort returns.
----@param inputs table<string, any>
+---@param parameters table<string, any>
 ---@return table? params, string? err
-local function _common_body(inputs)
+local function _common_body(parameters)
     local shared = require("ndebug.shared")
-    local port, err = shared.resolve_port(inputs.port)
+    local port, err = shared.resolve_port(parameters.port)
     if err then return nil, err end
-    local proxy_port, proxy_err = shared.resolve_port(inputs.proxy_port)
+    local proxy_port, proxy_err = shared.resolve_port(parameters.proxy_port)
     if proxy_err then return nil, proxy_err end
     local params = {}
     params.port             = port
-    params.hostname         = inputs.hostname
-    params.pathMappings     = inputs.path_mappings and vim.tbl_map(shared.normalize_path, inputs.path_mappings) or nil
-    params.stopOnEntry      = inputs.stop_on_entry
-    params.ignore           = inputs.ignore
-    params.ignoreExceptions = inputs.ignore_exceptions
-    params.skipFiles        = inputs.skip_files
-    params.skipEntryPaths   = inputs.skip_entry_paths
-    params.maxConnections   = inputs.max_connections
-    params.xdebugSettings   = inputs.xdebug_settings
-    params.xdebugCloudToken = inputs.xdebug_cloud_token
-    params.log              = inputs.log
+    params.hostname         = parameters.hostname
+    params.pathMappings     = parameters.path_mappings and vim.tbl_map(shared.normalize_path, parameters.path_mappings) or nil
+    params.stopOnEntry      = parameters.stop_on_entry
+    params.ignore           = parameters.ignore
+    params.ignoreExceptions = parameters.ignore_exceptions
+    params.skipFiles        = parameters.skip_files
+    params.skipEntryPaths   = parameters.skip_entry_paths
+    params.maxConnections   = parameters.max_connections
+    params.xdebugSettings   = parameters.xdebug_settings
+    params.xdebugCloudToken = parameters.xdebug_cloud_token
+    params.log              = parameters.log
     -- `stream` and `proxy` are nested objects upstream; they are offered as flat
-    -- inputs and assembled here. Naming any proxy field is what turns it on -
+    -- parameters and assembled here. Naming any proxy field is what turns it on -
     -- there is no separate switch to forget.
-    if inputs.stream_stdout then
-        params.stream = { stdout = inputs.stream_stdout }
+    if parameters.stream_stdout then
+        params.stream = { stdout = parameters.stream_stdout }
     end
-    if inputs.proxy_host or inputs.proxy_port or inputs.proxy_key then
+    if parameters.proxy_host or parameters.proxy_port or parameters.proxy_key then
         params.proxy = {
             enable = true,
-            host   = inputs.proxy_host,
+            host   = parameters.proxy_host,
             port   = proxy_port,
-            key    = inputs.proxy_key,
+            key    = parameters.proxy_key,
         }
     end
     return params
@@ -103,8 +103,8 @@ local _modes = {
         description = "wait for Xdebug to connect back on a port",
         request = "launch",
         inputs = _inputs {},
-        build = function(inputs)
-            local params, err = _common_body(inputs)
+        build = function(parameters)
+            local params, err = _common_body(parameters)
             if not params then return nil, err end
             return params
         end,
@@ -126,17 +126,17 @@ local _modes = {
             runtime_args       = { type = "list", description = "arguments passed to php, e.g. -dxdebug.mode=debug,-dxdebug.start_with_request=yes" },
             console            = { type = "string", completion = { "internalConsole", "integratedTerminal", "externalTerminal" }, description = "where the debuggee's stdio goes" },
         },
-        build = function(inputs)
+        build = function(parameters)
             local shared = require("ndebug.shared")
-            local params, err = _common_body(inputs)
+            local params, err = _common_body(parameters)
             if not params then return nil, err end
-            params.program, params.args = shared.split_command(inputs.command)
-            params.cwd               = shared.normalize_path(inputs.cwd)
-            params.env               = inputs.env
-            params.envFile           = shared.normalize_path(inputs.env_file)
-            params.runtimeExecutable = inputs.runtime_executable
-            params.runtimeArgs       = inputs.runtime_args
-            params.console           = inputs.console
+            params.program, params.args = shared.split_command(parameters.command)
+            params.cwd               = shared.normalize_path(parameters.cwd)
+            params.env               = parameters.env
+            params.envFile           = shared.normalize_path(parameters.env_file)
+            params.runtimeExecutable = parameters.runtime_executable
+            params.runtimeArgs       = parameters.runtime_args
+            params.console           = parameters.console
             return params
         end,
     },
