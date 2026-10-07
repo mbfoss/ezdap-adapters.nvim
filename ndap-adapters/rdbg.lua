@@ -18,7 +18,7 @@ local rdbg_bins = {
     "$GEM_ROOT/bin/rdbg",
 }
 
--- The interface rdbg binds its debug port to, and the host ndebug then connects
+-- The interface rdbg binds its debug port to, and the host ndap then connects
 -- to. rdbg binds every interface when left to itself, which is more than a local
 -- debug session needs.
 local rdbg_host = "127.0.0.1"
@@ -45,18 +45,18 @@ local RDBG_KEY = "__rdbg"
 ---The first candidate that is executable.
 ---@return string? rdbg, string[] tried
 local function _resolve_rdbg()
-    local shared = require("ndebug.shared")
+    local shared = require("ndap.shared")
     return shared.resolve_path(rdbg_bins, shared.is_executable)
 end
 
 ---Start `rdbg --open`, wait for its "Debugger can attach via TCP/IP (host:port)"
 ---line, and point the connection at that endpoint.
 ---@param spec    table            the `build`-supplied spawn description
----@param config  ndebug.dap.Config
----@param ctx     ndebug.AdapterSetupCtx
+---@param config  ndap.dap.Config
+---@param ctx     ndap.AdapterSetupCtx
 ---@param callback fun(err?: string, state?: any)
 local function _spawn_rdbg(spec, config, ctx, callback)
-    local shared = require("ndebug.shared")
+    local shared = require("ndap.shared")
     local rdbg, tried = _resolve_rdbg()
     if not rdbg then
         return callback("rdbg not found (install the debug gem, e.g. `gem install debug`); tried " ..
@@ -124,13 +124,13 @@ end
 ---Fields every mode accepts. `stop_on_entry` is the readable half of the
 ---gem's `nonstop`: rdbg has already stopped the program at load by the time we
 ---connect, and `nonstop` says whether to let it go once breakpoints are set.
----@type table<string, ndebug.Input>
+---@type table<string, ndap.Input>
 local _common_inputs = {
     stop_on_entry = { type = "boolean", description = "stay stopped where rdbg loaded the program, instead of continuing" },
 }
 
 ---Fields the two spawning modes share, on top of the common set.
----@type table<string, ndebug.Input>
+---@type table<string, ndap.Input>
 local _spawn_inputs = {
     cwd         = { type = "string", completion = "dir", description = "working directory" },
     env         = { type = "map", description = "environment variables" },
@@ -139,8 +139,8 @@ local _spawn_inputs = {
 }
 
 ---A mode's inputs: the always-accepted set plus whichever groups apply.
----@param ... table<string, ndebug.Input>
----@return table<string, ndebug.Input>
+---@param ... table<string, ndap.Input>
+---@return table<string, ndap.Input>
 local function _inputs(...)
     local out = vim.deepcopy(_common_inputs)
     for _, group in ipairs({ ... }) do
@@ -165,7 +165,7 @@ local function _spawn_body(parameters, command_mode)
     local params = _common_body(parameters)
     -- We started the debuggee ourselves, so its paths are this machine's paths.
     params.localfs = true
-    local shared = require("ndebug.shared")
+    local shared = require("ndap.shared")
     local program, args = shared.split_command(parameters.command)
     params[RDBG_KEY] = {
         program      = program,
@@ -179,7 +179,7 @@ local function _spawn_body(parameters, command_mode)
     return params
 end
 
----@type table<string, ndebug.Mode>
+---@type table<string, ndap.Mode>
 local _modes = {
     -- One `command` input carries the whole command line; `build` splits it into
     -- the script rdbg loads and the arguments handed to it.
@@ -222,7 +222,7 @@ local _modes = {
             path_mappings = { type = "map", completion = "dir", description = "source path mappings, remote=local" },
         },
         build = function(parameters)
-            local shared = require("ndebug.shared")
+            local shared = require("ndap.shared")
             local port, err = shared.resolve_port(parameters.port)
             if err then return nil, err end
             local params = _common_body(parameters)
@@ -246,7 +246,7 @@ local _modes = {
     },
 }
 
----@type ndebug.AdapterDef
+---@type ndap.AdapterDef
 return {
     -- The endpoint is not known until `setup` has either started a server or been
     -- told where an existing one is. Because this adapter has a `setup`, a task's

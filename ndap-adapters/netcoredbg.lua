@@ -23,14 +23,14 @@ local netcoredbg_bins = {
 -- what makes it speak DAP at all.
 local netcoredbg_args = { "--interpreter=vscode" }
 
----@type ndebug.AdapterDef
+---@type ndap.AdapterDef
 return {
     -- Nothing to spawn - netcoredbg speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at whatever
     -- it finds.
     setup = function(config, _, callback)
-        local shared = require("ndebug.shared")
+        local shared = require("ndap.shared")
         local exe, tried = shared.resolve_path(netcoredbg_bins, shared.is_executable)
         if not exe then
             return callback("netcoredbg not found (unpack its release, or install it via mason); tried " ..
@@ -55,7 +55,7 @@ return {
                 enable_step_filtering = { type = "boolean", description = "step over property accessors and operators (default true)" },
             },
             build = function(parameters)
-                local shared = require("ndebug.shared")
+                local shared = require("ndap.shared")
                 local program, args = shared.split_command(parameters.command)
                 return {
                     program             = program,
@@ -77,7 +77,7 @@ return {
                 pid = { type = "integer", description = "process id to attach to" },
             },
             build = function(parameters)
-                local pid, err = require("ndebug.shared").resolve_pid(parameters.pid)
+                local pid, err = require("ndap.shared").resolve_pid(parameters.pid)
                 if not pid then return nil, err end
                 return {
                     processId = pid,

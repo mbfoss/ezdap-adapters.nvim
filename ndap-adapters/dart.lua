@@ -49,7 +49,7 @@ local _tool_of = {
 ---Declared once and merged into every mode, so a field is described in one
 ---place. The `debug_*` pair is what "just my code" is built out of here: SDK and
 ---package libraries are debuggable unless turned off.
----@type table<string, ndebug.Input>
+---@type table<string, ndap.Input>
 local _common_inputs = {
     cwd                               = { type = "string", completion = "dir", description = "working directory" },
     env                               = { type = "map", description = "environment variables for the launched process" },
@@ -65,7 +65,7 @@ local _common_inputs = {
 ---Fields for running the tool itself, rather than the program it runs. Every
 ---mode whose adapter shells out to `dart`/`flutter` accepts them - including
 ---the Flutter attach, which runs the flutter tool to reach the device.
----@type table<string, ndebug.Input>
+---@type table<string, ndap.Input>
 local _tool_inputs = {
     tool_args                 = { type = "list", description = "arguments for the dart/flutter tool, e.g. -d,chrome or --flavor,dev" },
     custom_tool               = { type = "string", completion = "file", description = "a compatible tool to run instead of dart/flutter" },
@@ -74,15 +74,15 @@ local _tool_inputs = {
 
 ---Fields both attach modes need: which running VM Service to connect to,
 ---named directly or through the file the tool writes it to.
----@type table<string, ndebug.Input>
+---@type table<string, ndap.Input>
 local _attach_inputs = {
     vm_service_uri       = { type = "string", description = "VM Service uri of the running app" },
     vm_service_info_file = { type = "string", completion = "file", description = "file to read the VM Service uri from" },
 }
 
 ---A mode's inputs: the always-accepted set plus whichever groups apply.
----@param ... table<string, ndebug.Input>
----@return table<string, ndebug.Input>
+---@param ... table<string, ndap.Input>
+---@return table<string, ndap.Input>
 local function _inputs(...)
     local out = vim.deepcopy(_common_inputs)
     for _, group in ipairs({ ... }) do
@@ -94,7 +94,7 @@ end
 ---@param parameters table<string, any>
 ---@return table params
 local function _common_body(parameters)
-    local shared = require("ndebug.shared")
+    local shared = require("ndap.shared")
     local params = {}
     params.cwd                           = shared.normalize_path(parameters.cwd)
     params.env                           = parameters.env
@@ -113,7 +113,7 @@ end
 local function _tool_body(parameters)
     local params = _common_body(parameters)
     params.toolArgs               = parameters.tool_args
-    params.customTool             = require("ndebug.shared").normalize_path(parameters.custom_tool)
+    params.customTool             = require("ndap.shared").normalize_path(parameters.custom_tool)
     params.customToolReplacesArgs = parameters.custom_tool_replaces_args
     return params
 end
@@ -128,13 +128,13 @@ end
 local function _launch_body(parameters)
     local params = _tool_body(parameters)
     if parameters.command then
-        params.program, params.args = require("ndebug.shared").split_command(parameters.command)
+        params.program, params.args = require("ndap.shared").split_command(parameters.command)
     end
     params.noDebug = parameters.no_debug
     return params
 end
 
----@type table<string, ndebug.Mode>
+---@type table<string, ndap.Mode>
 local _modes = {
     -- `console` is the one field that changes who runs the debuggee: left alone,
     -- the adapter runs it and routes its output to the debug console, which is
@@ -150,7 +150,7 @@ local _modes = {
             console            = { type = "string", completion = { "internalConsole", "terminal", "externalTerminal" }, description = "where the debuggee runs; a terminal is what gives it stdin" },
         }),
         build = function(parameters)
-            local port, err = require("ndebug.shared").resolve_port(parameters.vm_service_port)
+            local port, err = require("ndap.shared").resolve_port(parameters.vm_service_port)
             if err then return nil, err end
             local params = _launch_body(parameters)
             params.vmAdditionalArgs = parameters.vm_additional_args
@@ -187,7 +187,7 @@ local _modes = {
         build = function(parameters)
             local params = _common_body(parameters)
             params.vmServiceUri      = parameters.vm_service_uri
-            params.vmServiceInfoFile = require("ndebug.shared").normalize_path(parameters.vm_service_info_file)
+            params.vmServiceInfoFile = require("ndap.shared").normalize_path(parameters.vm_service_info_file)
             return params
         end,
     },
@@ -227,7 +227,7 @@ local _modes = {
             program = { type = "string", completion = "file", description = "entry point of the running app, for resolving its sources" },
         }),
         build = function(parameters)
-            local shared = require("ndebug.shared")
+            local shared = require("ndap.shared")
             local params = _tool_body(parameters)
             params.vmServiceUri      = parameters.vm_service_uri
             params.vmServiceInfoFile = shared.normalize_path(parameters.vm_service_info_file)
@@ -237,14 +237,14 @@ local _modes = {
     },
 }
 
----@type ndebug.AdapterDef
+---@type ndap.AdapterDef
 return {
     -- Nothing to spawn - every one of these adapters speaks DAP over stdio - but
     -- which tool to run is the mode's answer, not the def's, and a missing SDK
     -- fails the session with no legible reason. Both are settled here, where a
     -- plain error string reaches the user.
     setup = function(config, ctx, callback)
-        local shared = require("ndebug.shared")
+        local shared = require("ndap.shared")
         -- A raw task names no mode, so it is on its own here: whatever command
         -- it carries stands.
         local spec = ctx.mode and _tool_of[ctx.mode]

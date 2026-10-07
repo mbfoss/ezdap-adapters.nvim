@@ -20,17 +20,17 @@ local delve_args = { "dap" }
 ---The first candidate that is executable.
 ---@return string? dlv, string[] tried
 local function _resolve_dlv()
-    local shared = require("ndebug.shared")
+    local shared = require("ndap.shared")
     return shared.resolve_path(delve_bins, shared.is_executable)
 end
 
 ---Start `dlv dap`, wait for its "DAP server listening at: host:port" line, and
 ---point the connection at that endpoint (delve speaks DAP over TCP, not stdio).
----@param config   ndebug.dap.Config
----@param ctx      ndebug.AdapterSetupCtx
+---@param config   ndap.dap.Config
+---@param ctx      ndap.AdapterSetupCtx
 ---@param callback fun(err?: string, state?: any)
 local function _setup(config, ctx, callback)
-    local shared = require("ndebug.shared")
+    local shared = require("ndap.shared")
     local dlv, tried = _resolve_dlv()
     if not dlv then
         return callback("dlv not found (install delve, e.g. via mason); tried " .. table.concat(tried, ", "))
@@ -80,7 +80,7 @@ end
 -- mode accepts `dlvCwd`/`env`; `exec` adds the process fields, and `debug`/`test`
 -- add the build and display fields on top of those.
 
----@type table<string, ndebug.Input>
+---@type table<string, ndap.Input>
 local _any_mode_inputs = {
     dlv_cwd         = { type = "string", completion = "dir", description = "working directory for the delve server itself" },
     env             = { type = "map", description = "environment variables for the debuggee" },
@@ -88,7 +88,7 @@ local _any_mode_inputs = {
 }
 
 ---Fields every mode that runs a process accepts (`exec`, and so `debug`/`test`).
----@type table<string, ndebug.Input>
+---@type table<string, ndap.Input>
 local _process_inputs = {
     command  = { type = "string", completion = "command", required = true, description = "command line to debug (package or binary, plus args)" },
     cwd      = { type = "string", completion = "dir", description = "working directory for the debuggee" },
@@ -97,7 +97,7 @@ local _process_inputs = {
 }
 
 ---Build and display fields only the compiling modes (`debug`, `test`) accept.
----@type table<string, ndebug.Input>
+---@type table<string, ndap.Input>
 local _build_inputs = {
     build_flags            = { type = "string", description = "flags passed to the Go compiler" },
     output                 = { type = "string", completion = "file", description = "path for the compiled binary" },
@@ -112,8 +112,8 @@ local _build_inputs = {
 }
 
 ---A mode's inputs: the always-accepted set plus whichever groups apply.
----@param ... table<string, ndebug.Input>
----@return table<string, ndebug.Input>
+---@param ... table<string, ndap.Input>
+---@return table<string, ndap.Input>
 local function _inputs(...)
     local out = vim.deepcopy(_any_mode_inputs)
     for _, group in ipairs({ ... }) do
@@ -126,7 +126,7 @@ end
 ---@return table params
 local function _any_mode_body(parameters)
     local params = {}
-    params.dlvCwd = require("ndebug.shared").normalize_path(parameters.dlv_cwd)
+    params.dlvCwd = require("ndap.shared").normalize_path(parameters.dlv_cwd)
     params.env    = parameters.env
     -- delve wants a list of {from, to} pairs, not a flat mapping.
     if parameters.substitute_path then
@@ -142,7 +142,7 @@ end
 ---@param parameters table<string, any>
 ---@return table params
 local function _process_body(parameters)
-    local shared = require("ndebug.shared")
+    local shared = require("ndap.shared")
     local params = _any_mode_body(parameters)
     params.program, params.args = shared.split_command(parameters.command)
     params.cwd                  = shared.normalize_path(parameters.cwd)
@@ -156,7 +156,7 @@ end
 local function _build_body(parameters)
     local params = _process_body(parameters)
     params.buildFlags           = parameters.build_flags
-    params.output               = require("ndebug.shared").normalize_path(parameters.output)
+    params.output               = require("ndap.shared").normalize_path(parameters.output)
     params.stopOnEntry          = parameters.stop_on_entry
     params.stackTraceDepth      = parameters.stack_trace_depth
     params.showGlobalVariables  = parameters.show_global_variables
@@ -168,7 +168,7 @@ local function _build_body(parameters)
     return params
 end
 
----@type ndebug.AdapterDef
+---@type ndap.AdapterDef
 return {
     setup    = _setup,
     teardown = function(_, ctx) if ctx and ctx.handle then ctx.handle.stop() end end,
@@ -214,7 +214,7 @@ return {
                 trace_dir_path = { type = "string", completion = "dir", required = true, description = "rr trace directory to replay" },
             },
             build = function(parameters)
-                local shared = require("ndebug.shared")
+                local shared = require("ndap.shared")
                 local params = _any_mode_body(parameters)
                 params.mode = "replay"
                 params.program      = shared.normalize_path(parameters.program)
@@ -230,7 +230,7 @@ return {
                 corefile_path = { type = "string", completion = "file", required = true, description = "core dump to load" },
             },
             build = function(parameters)
-                local shared = require("ndebug.shared")
+                local shared = require("ndap.shared")
                 local params = _any_mode_body(parameters)
                 params.mode = "core"
                 params.program      = shared.normalize_path(parameters.program)
@@ -249,7 +249,7 @@ return {
                 backend = { type = "string", completion = { "default", "native", "lldb", "rr" }, description = "debugger backend" },
             },
             build = function(parameters)
-                local pid, err = require("ndebug.shared").resolve_pid(parameters.pid)
+                local pid, err = require("ndap.shared").resolve_pid(parameters.pid)
                 if not pid then return nil, err end
                 return {
                     mode      = "local",

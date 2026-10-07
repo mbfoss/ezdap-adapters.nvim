@@ -11,14 +11,14 @@
 -- $PATH at all.
 local lldb_dap_bins = { "lldb-dap" }
 
----@type ndebug.AdapterDef
+---@type ndap.AdapterDef
 return {
     -- Nothing to spawn - lldb-dap speaks DAP over stdio - but a missing binary
     -- fails the session with no legible reason, so the lookup happens here, where
     -- a plain error string reaches the user, and the config is pointed at what it
     -- finds.
     setup    = function(config, _, callback)
-        local shared = require("ndebug.shared")
+        local shared = require("ndap.shared")
         local exe, tried = shared.resolve_path(lldb_dap_bins, shared.is_executable)
         if not exe then
             return callback("lldb-dap not found (install LLVM, or Xcode's command line tools); tried " ..
@@ -45,7 +45,7 @@ return {
                 init_commands   = { type = "list", description = "LLDB commands run at debugger startup" },
             },
             build = function(parameters)
-                local shared = require("ndebug.shared")
+                local shared = require("ndap.shared")
                 local program, args = shared.split_command(parameters.command)
                 return {
                     name          = "lldb",
@@ -74,7 +74,7 @@ return {
                 init_commands = { type = "list", description = "LLDB commands run at debugger startup" },
             },
             build = function(parameters)
-                local shared = require("ndebug.shared")
+                local shared = require("ndap.shared")
                 local pid, err = shared.resolve_pid(parameters.pid)
                 if not pid then return nil, err end
                 return {
@@ -98,7 +98,7 @@ return {
                 init_commands = { type = "list", description = "LLDB commands run at debugger startup" },
             },
             build = function(parameters)
-                local shared = require("ndebug.shared")
+                local shared = require("ndap.shared")
                 return {
                     name         = "lldb",
                     type         = "lldb-dap",
@@ -120,7 +120,7 @@ return {
                 source_map  = { type = "map", completion = "dir", description = "source path remappings, from=to" },
             },
             build = function(parameters)
-                local shared = require("ndebug.shared")
+                local shared = require("ndap.shared")
                 return {
                     name       = "lldb",
                     type       = "lldb-dap",
@@ -141,7 +141,7 @@ return {
                 source_map  = { type = "map", completion = "dir", description = "source path remappings, from=to" },
             },
             build = function(parameters)
-                local shared = require("ndebug.shared")
+                local shared = require("ndap.shared")
                 local port, err = shared.resolve_port(parameters.port)
                 if err then return nil, err end
                 return {

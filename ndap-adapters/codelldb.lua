@@ -18,7 +18,7 @@ local codelldb_bins = {
 
 ---Attributes codelldb accepts on both a launch and an attach. Declared once and
 ---merged into every mode, so a field is described in one place.
----@type table<string, ndebug.Input>
+---@type table<string, ndap.Input>
 local _common_inputs = {
     source_map             = { type = "map", completion = "dir", description = "source path remappings, from=to" },
     relative_path_base     = { type = "string", completion = "dir", description = "base directory for relative source paths" },
@@ -38,12 +38,12 @@ local _common_inputs = {
 ---@param path string
 ---@return string
 local function _quoted(path)
-    return '"' .. require("ndebug.shared").normalize_path(path) .. '"'
+    return '"' .. require("ndap.shared").normalize_path(path) .. '"'
 end
 
 ---A mode's own inputs on top of the common set.
----@param extra table<string, ndebug.Input>
----@return table<string, ndebug.Input>
+---@param extra table<string, ndap.Input>
+---@return table<string, ndap.Input>
 local function _inputs(extra)
     return vim.tbl_extend("error", vim.deepcopy(_common_inputs), extra)
 end
@@ -52,7 +52,7 @@ end
 ---@param parameters table<string, any>
 ---@return table params
 local function _common_body(parameters)
-    local shared = require("ndebug.shared")
+    local shared = require("ndap.shared")
     local params = {}
     params.name                 = "codelldb"
     params.type                 = "lldb"
@@ -70,10 +70,10 @@ local function _common_body(parameters)
     return params
 end
 
----@type ndebug.AdapterDef
+---@type ndap.AdapterDef
 return {
     setup = function(config, _, callback)
-        local shared = require("ndebug.shared")
+        local shared = require("ndap.shared")
         local exe, tried = shared.resolve_path(codelldb_bins, shared.is_executable)
         if not exe then
             return callback("codelldb not found (unpack its .vsix or release, or install it via mason); tried " ..
@@ -98,7 +98,7 @@ return {
                 stop_on_entry = { type = "boolean", description = "break at program entry" },
             },
             build = function(parameters)
-                local shared = require("ndebug.shared")
+                local shared = require("ndap.shared")
                 local params = _common_body(parameters)
                 params.program, params.args = shared.split_command(parameters.command)
                 params.cwd         = shared.normalize_path(parameters.cwd)
@@ -119,7 +119,7 @@ return {
                 stop_on_entry = { type = "boolean", description = "break immediately after attaching" },
             },
             build = function(parameters)
-                local shared = require("ndebug.shared")
+                local shared = require("ndap.shared")
                 local pid, err = shared.resolve_pid(parameters.pid)
                 if not pid then return nil, err end
                 local params = _common_body(parameters)
@@ -139,7 +139,7 @@ return {
             },
             build = function(parameters)
                 local params = _common_body(parameters)
-                params.program     = require("ndebug.shared").normalize_path(parameters.program)
+                params.program     = require("ndap.shared").normalize_path(parameters.program)
                 params.waitFor     = parameters.wait_for
                 params.stopOnEntry = parameters.stop_on_entry
                 return params
@@ -179,7 +179,7 @@ return {
             -- `processCreateCommands`: without one codelldb runs `process launch` and
             -- debugs the program locally instead of the remote.
             build = function(parameters)
-                local port, err = require("ndebug.shared").resolve_port(parameters.port)
+                local port, err = require("ndap.shared").resolve_port(parameters.port)
                 if err then return nil, err end
                 local params = _common_body(parameters)
                 if parameters.program then
