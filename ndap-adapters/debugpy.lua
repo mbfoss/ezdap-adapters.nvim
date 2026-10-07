@@ -29,6 +29,11 @@ local function _venv_python(dir)
         or vim.fs.joinpath(dir, "bin", "python")
 end
 
+-- Those same directories as interpreters, so `resolve_path` is handed the file
+-- it actually tests; only an entry's leading `$VAR`/`~`/relative part is
+-- expanded, so the appended `bin/python` survives either way.
+local debugpy_venv_pythons = vim.tbl_map(_venv_python, debugpy_venv_dirs)
+
 ---Whether `python` runs and can import the adapter module.
 ---@param python string
 ---@return boolean
@@ -56,8 +61,8 @@ local function _debugpy_setup(config, ctx, callback)
     -- Venvs first, then bare interpreters: the first one debugpy actually imports
     -- under wins, so no venv is required.
     local cwd = config.cwd or vim.fn.getcwd()
-    local python, venv_tried = shared.resolve_path(debugpy_venv_dirs, _has_debugpy,
-        { cwd = cwd, transform = _venv_python })
+    local python, venv_tried = shared.resolve_path(debugpy_venv_pythons, _has_debugpy,
+        { cwd = cwd })
     if not python then
         local bare = vim.deepcopy(debugpy_pythons)
         local bare_tried
