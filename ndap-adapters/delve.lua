@@ -5,9 +5,9 @@
 -- `_setup` spawns it, parses that line and points the connection there.
 
 -- Where to look for dlv, in order; the first executable wins. Put your own path
--- first to pin it. A leading "$" names an environment variable, skipped when
--- unset; "~" expands to the home directory. A bare name (no separator) is
--- looked up on $PATH.
+-- first to pin it. "$VAR" and "~" expand anywhere in an entry, as they do in
+-- `vim.fs.normalize`; an entry naming an unset or empty variable is skipped. A
+-- bare name (no separator) is looked up on $PATH.
 local delve_bins = {
     "dlv",
     "$GOBIN/dlv",

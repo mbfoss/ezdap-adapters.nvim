@@ -3,8 +3,9 @@
 
 -- Where to look for lldb-dap, in order; the config's lldb-dap is tried first,
 -- then these, and the first executable wins. Put your own path first to pin it.
--- A leading "$" names an environment variable, skipped when unset; "~" expands
--- to the home directory. A bare name (no separator) is looked up on $PATH, which
+-- "$VAR" and "~" expand anywhere in an entry, as they do in `vim.fs.normalize`;
+-- an entry naming an unset or empty variable is skipped. A bare name (no
+-- separator) is looked up on $PATH, which
 -- is where every install is picked up from: a versioned LLVM ("lldb-dap-21",
 -- added here), a package manager's prefix, or Xcode's toolchain, whose bin
 -- directory `xcode-select -p` names and which `xcrun lldb-dap` runs without

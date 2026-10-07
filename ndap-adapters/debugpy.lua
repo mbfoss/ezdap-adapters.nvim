@@ -2,9 +2,10 @@
 
 -- Directories searched for a venv-style interpreter (bin/python, or
 -- Scripts/python.exe on Windows), in order; the first one with debugpy
--- importable wins, so put your own interpreter's directory first to pin it. A
--- leading "$" names an environment variable, skipped when unset; "~" expands to
--- the home directory; a relative entry resolves against the cwd. Mason is only
+-- importable wins, so put your own interpreter's directory first to pin it.
+-- "$VAR" and "~" expand anywhere in an entry, as they do in `vim.fs.normalize`;
+-- an entry naming an unset or empty variable is skipped; a relative entry
+-- resolves against the cwd. Mason is only
 -- one of the entries, and the last of them: `pip install debugpy` into the
 -- project's venv, or into the interpreter tried below, is enough on its own.
 local debugpy_venv_dirs = {
@@ -30,8 +31,8 @@ local function _venv_python(dir)
 end
 
 -- Those same directories as interpreters, so `resolve_path` is handed the file
--- it actually tests; only an entry's leading `$VAR`/`~`/relative part is
--- expanded, so the appended `bin/python` survives either way.
+-- it actually tests. `vim.fs.normalize` expands `$VAR` and `~` wherever they
+-- appear, so appending `bin/python` to an entry needs no special arrangement.
 local debugpy_venv_pythons = vim.tbl_map(_venv_python, debugpy_venv_dirs)
 
 ---Whether `python` runs and can import the adapter module.

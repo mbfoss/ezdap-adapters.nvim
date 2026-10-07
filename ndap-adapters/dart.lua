@@ -13,9 +13,9 @@
 -- arguments; the flutter tool is configured through `tool_args` instead.
 
 -- Where to look for each SDK's tool, in order; the first executable wins. Put
--- your own path first to pin it. A leading "$" names an environment variable,
--- skipped when unset; "~" expands to the home directory. A bare name (no
--- separator) is looked up on $PATH.
+-- your own path first to pin it. "$VAR" and "~" expand anywhere in an entry, as
+-- they do in `vim.fs.normalize`; an entry naming an unset or empty variable is
+-- skipped. A bare name (no separator) is looked up on $PATH.
 local dart_bins = {
     "dart",
     "$DART_SDK/bin/dart",

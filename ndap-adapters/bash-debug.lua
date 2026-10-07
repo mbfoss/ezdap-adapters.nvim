@@ -1,7 +1,8 @@
 -- Directories that may hold the bashdb library, in order; the first one that
--- holds a `bashdb` script wins. Put your own directory first to pin it. A
--- leading "$" names an environment variable, skipped when unset; "~" expands to
--- the home directory. Mason is only one of the entries and not required: the
+-- holds a `bashdb` script wins. Put your own directory first to pin it. "$VAR"
+-- and "~" expand anywhere in an entry, as they do in `vim.fs.normalize`; an entry
+-- naming an unset or empty variable is skipped. Mason is only one of the entries
+-- and not required: the
 -- extension ships the same `bashdb_dir` inside its .vsix, which
 -- $BASH_DEBUG_ADAPTER can point at, and a system bashdb install is named through
 -- $BASHDB_HOME.

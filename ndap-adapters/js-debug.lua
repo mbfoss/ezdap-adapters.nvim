@@ -4,8 +4,9 @@
 -- picks the debuggee's console via `console`, not runInTerminal.
 
 -- Where to look for the server's js entry point, in order; the first readable
--- one wins. Put your own file first to pin it. A leading "$" names an
--- environment variable, skipped when unset; "~" expands to the home directory.
+-- one wins. Put your own file first to pin it. "$VAR" and "~" expand anywhere in
+-- an entry, as they do in `vim.fs.normalize`; an entry naming an unset or empty
+-- variable is skipped.
 -- Mason is only one of the entries, and not required: the same `js-debug` tree
 -- comes out of the upstream release tarball or an npm install, and
 -- $JS_DEBUG_HOME points at wherever you unpacked it. Entries are literal paths,

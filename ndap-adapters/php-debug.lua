@@ -5,8 +5,9 @@
 -- it, so the bodiless `listen` mode is a launch request too.
 
 -- Where to look for the adapter's js entry point, in order; the first readable
--- one wins. Put your own file first to pin it. A leading "$" names an
--- environment variable, skipped when unset; "~" expands to the home directory.
+-- one wins. Put your own file first to pin it. "$VAR" and "~" expand anywhere in
+-- an entry, as they do in `vim.fs.normalize`; an entry naming an unset or empty
+-- variable is skipped.
 -- Mason is only one of the entries and not required - unpack the .vsix anywhere
 -- and point $PHP_DEBUG_HOME at it, either at the extension root or at the
 -- directory above it. Entries are literal paths, so a VS Code install, which

@@ -9,9 +9,9 @@
 -- `nonstop`; see `process_request` in lib/debug/server_dap.rb.
 
 -- Where to look for rdbg, in order; the first executable wins. Put your own path
--- first to pin it. A leading "$" names an environment variable, skipped when
--- unset; "~" expands to the home directory. A bare name (no separator) is looked
--- up on $PATH.
+-- first to pin it. "$VAR" and "~" expand anywhere in an entry, as they do in
+-- `vim.fs.normalize`; an entry naming an unset or empty variable is skipped. A
+-- bare name (no separator) is looked up on $PATH.
 local rdbg_bins = {
     "rdbg",
     "$GEM_HOME/bin/rdbg",

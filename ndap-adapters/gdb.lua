@@ -1,10 +1,10 @@
 -- https://sourceware.org/gdb/current/onlinedocs/gdb.html/Debugger-Adapter-Protocol.html
 
 -- Where to look for gdb, in order; the first one new enough for DAP wins. Put
--- your own path first to pin it. A leading "$" names an environment variable,
--- skipped when unset; "~" expands to the home directory. A bare name (no
--- separator) is looked up on $PATH - a good place to add a cross-toolchain gdb
--- such as "arm-none-eabi-gdb".
+-- your own path first to pin it. "$VAR" and "~" expand anywhere in an entry, as
+-- they do in `vim.fs.normalize`; an entry naming an unset or empty variable is
+-- skipped. A bare name (no separator) is looked up on $PATH - a good place to
+-- add a cross-toolchain gdb such as "arm-none-eabi-gdb".
 local gdb_bins = {
     "gdb",
     "gdb-multiarch",

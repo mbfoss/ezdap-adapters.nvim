@@ -141,7 +141,7 @@ entry that exists wins.
 ```lua
 local delve_bins = {
     "dlv",             -- bare name: looked up on $PATH
-    "$GOBIN/dlv",      -- leading $: environment variable, skipped when unset
+    "$GOBIN/dlv",      -- $VAR: expanded anywhere; an unset/empty var skips it
     "~/go/bin/dlv",    -- ~: home directory
 }
 ```
