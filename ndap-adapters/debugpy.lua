@@ -174,7 +174,7 @@ end
 ---@type ndap.AdapterDef
 return {
     setup    = _debugpy_setup,
-    teardown = function(_, ctx) if ctx then ctx.handle.stop() end end,
+    teardown = function(_, state) if state then state.handle.stop() end end,
     modes = {
         -- One `command` input carries the whole command line; `build` splits it into
         -- `program` (the first word) and `args` (the rest).

@@ -231,13 +231,14 @@ return {
         ctx.report("js-debug: waiting for server port")
         vim.defer_fn(function()
             if not resolved_port then
-                done("js-debug server did not start within 5 s")
+                -- Handed back with the error so `teardown` stops it.
+                done("js-debug server did not start within 5 s", { handle = handle })
             end
         end, 5000)
     end,
 
-    teardown = function(_, ctx)
-        if ctx then ctx.handle.stop() end
+    teardown = function(_, state)
+        if state then state.handle.stop() end
     end,
 
     modes = _modes,

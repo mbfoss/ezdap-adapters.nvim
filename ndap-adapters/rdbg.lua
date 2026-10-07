@@ -36,12 +36,6 @@ local function _free_port()
     return addr.port
 end
 
----Where a mode's `build` leaves what `setup` needs - the command line to
----start, or the endpoint to dial. Nothing here belongs in the request body: it
----describes how the session is *reached*, which is settled before the body is
----sent, so `setup` consumes the key and drops it.
-local RDBG_KEY = "__rdbg"
-
 ---The first candidate that is executable.
 ---@return string? rdbg, string[] tried
 local function _resolve_rdbg()
@@ -51,11 +45,12 @@ end
 
 ---Start `rdbg --open`, wait for its "Debugger can attach via TCP/IP (host:port)"
 ---line, and point the connection at that endpoint.
----@param spec    table            the `build`-supplied spawn description
----@param config  ndap.dap.Config
----@param ctx     ndap.AdapterSetupCtx
----@param callback fun(err?: string, state?: any)
-local function _spawn_rdbg(spec, config, ctx, callback)
+---@param parameters   table            the mode's answered inputs
+---@param command_mode boolean          rdbg's `--command`, for a program on $PATH
+---@param config       ndap.dap.Config
+---@param ctx          ndap.AdapterSetupCtx
+---@param callback     fun(err?: string, state?: any)
+local function _spawn_rdbg(parameters, command_mode, config, ctx, callback)
     local shared = require("ndap.shared")
     local rdbg, tried = _resolve_rdbg()
     if not rdbg then
@@ -64,17 +59,18 @@ local function _spawn_rdbg(spec, config, ctx, callback)
     end
     -- `bundle exec` so the debuggee runs under the project's own bundle, which is
     -- also the only way the gem is loadable when it is a Gemfile dependency.
-    local cmd = spec.use_bundler and { "bundle", "exec", rdbg } or { rdbg }
+    local cmd = parameters.use_bundler and { "bundle", "exec", rdbg } or { rdbg }
     vim.list_extend(cmd, { "--open", "--host", rdbg_host, "--port", tostring(_free_port()) })
     -- Command mode: the target is a program on $PATH (rspec, rake, ruby itself)
     -- rather than a Ruby script rdbg loads.
-    if spec.command_mode then table.insert(cmd, "--command") end
-    vim.list_extend(cmd, spec.rdbg_args or {})
+    if command_mode then table.insert(cmd, "--command") end
+    vim.list_extend(cmd, parameters.rdbg_args or {})
     -- Everything past `--` is the debuggee, so an argument of its own that starts
     -- with a dash is never read as an rdbg flag.
     table.insert(cmd, "--")
-    table.insert(cmd, spec.program)
-    vim.list_extend(cmd, spec.args or {})
+    local program, args = shared.split_command(parameters.command)
+    table.insert(cmd, program)
+    vim.list_extend(cmd, args)
 
     local resolved = false
     local called   = false
@@ -86,8 +82,8 @@ local function _spawn_rdbg(spec, config, ctx, callback)
     end
     handle = shared.spawn(cmd, {
         bufname       = ctx.make_buf_name("server"),
-        cwd           = spec.cwd or config.cwd or vim.fn.getcwd(),
-        env           = spec.env,
+        cwd           = shared.normalize_path(parameters.cwd) or config.cwd or vim.fn.getcwd(),
+        env           = parameters.env,
         -- The announcement shares a pty with the debuggee's own output, so only
         -- whole lines are matched against.
         line_buffered = true,
@@ -115,9 +111,10 @@ local function _spawn_rdbg(spec, config, ctx, callback)
     ctx.add_bufnr(handle.bufnr, { label = "rdbg", priority = -2 })
     ctx.report("rdbg: waiting for the debug port")
     vim.defer_fn(function()
-        if not resolved then
-            done(("rdbg did not report a debug port within %d s"):format(rdbg_start_timeout_ms / 1000))
-        end
+        if resolved then return end
+        -- Handed back with the error so `teardown` stops it.
+        done(("rdbg did not report a debug port within %d s"):format(rdbg_start_timeout_ms / 1000),
+            { handle = handle })
     end, rdbg_start_timeout_ms)
 end
 
@@ -157,42 +154,28 @@ local function _common_body(parameters)
     return params
 end
 
----The body and spawn description shared by `script`/`command`,
----which differ only in whether rdbg is put in command mode.
----@param parameters  table<string, any>
----@param command_mode boolean
-local function _spawn_body(parameters, command_mode)
+---The body shared by `script` and `command`: rdbg loads the debuggee itself, so
+---the body names no program, and `setup` takes command mode off `ctx.mode`.
+---@param parameters table<string, any>
+---@return table params
+local function _spawn_body(parameters)
     local params = _common_body(parameters)
     -- We started the debuggee ourselves, so its paths are this machine's paths.
     params.localfs = true
-    local shared = require("ndap.shared")
-    local program, args = shared.split_command(parameters.command)
-    params[RDBG_KEY] = {
-        program      = program,
-        args         = args,
-        cwd          = shared.normalize_path(parameters.cwd),
-        env          = parameters.env,
-        use_bundler  = parameters.use_bundler,
-        rdbg_args    = parameters.rdbg_args,
-        command_mode = command_mode,
-    }
     return params
 end
 
 ---@type table<string, ndap.Mode>
 local _modes = {
-    -- One `command` input carries the whole command line; `build` splits it into
-    -- the script rdbg loads and the arguments handed to it.
+    -- One `command` input carries the whole command line; `setup` starts it under
+    -- rdbg, which loads and stops it before we connect.
     script = {
         description = "debug a Ruby script",
         request = "attach",
         inputs = _inputs(_spawn_inputs, {
             command = { type = "string", completion = "command", required = true, description = "Ruby script to debug, plus its arguments" },
         }),
-        build = function(parameters)
-            local params = _spawn_body(parameters, false)
-            return params
-        end,
+        build = _spawn_body,
     },
     -- The same thing in rdbg's command mode, for the case the script form cannot
     -- express: a program on $PATH rather than a .rb file - `rspec spec/foo_spec.rb`,
@@ -203,10 +186,7 @@ local _modes = {
         inputs = _inputs(_spawn_inputs, {
             command = { type = "string", completion = "command", required = true, description = "command to debug, plus its arguments" },
         }),
-        build = function(parameters)
-            local params = _spawn_body(parameters, true)
-            return params
-        end,
+        build = _spawn_body,
     },
     -- Nothing is started here: the debuggee was opened elsewhere, with
     -- `rdbg --open --port ...` or `RUBY_DEBUG_OPEN=true`. Its paths are its own,
@@ -240,34 +220,24 @@ local _modes = {
             else
                 params.localfs = parameters.local_fs == nil and true or parameters.local_fs
             end
-            params[RDBG_KEY] = { host = parameters.host, port = port }
-            return params
+            -- Already listening: the connection is all this mode adds to the body.
+            return params, { host = parameters.host or rdbg_host, port = port }
         end,
     },
 }
 
 ---@type ndap.AdapterDef
 return {
-    -- The endpoint is not known until `setup` has either started a server or been
-    -- told where an existing one is. Because this adapter has a `setup`, a task's
-    -- own host/port are left to it rather than applied by the runner, so `remote`
-    -- routes them through here too.
+    -- `script` and `command` start the debuggee here, from the inputs `build` was
+    -- resolved with. `remote` finds a server already running, its connection
+    -- arriving on the task.
     setup = function(config, ctx, callback)
-        local args = config.request_args
-        if not args or not args[RDBG_KEY] then
-            return callback(
-                "rdbg: nothing to connect to - run one of its modes " ..
-                "(script, command, remote), which say how to reach the debuggee")
+        local mode, parameters = ctx.mode, ctx.parameters
+        if (mode == "script" or mode == "command") and parameters then
+            return _spawn_rdbg(parameters, mode == "command", config, ctx, callback)
         end
-        local spec = args[RDBG_KEY]
-        args[RDBG_KEY] = nil
-        if spec.host or spec.port then
-            config.host = spec.host or rdbg_host
-            config.port = spec.port
-            return callback()
-        end
-        _spawn_rdbg(spec, config, ctx, callback)
+        callback()
     end,
-    teardown = function(_, ctx) if ctx and ctx.handle then ctx.handle.stop() end end,
+    teardown = function(_, state) if state and state.handle then state.handle.stop() end end,
     modes = _modes,
 }

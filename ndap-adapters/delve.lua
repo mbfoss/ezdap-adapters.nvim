@@ -171,7 +171,7 @@ end
 ---@type ndap.AdapterDef
 return {
     setup    = _setup,
-    teardown = function(_, ctx) if ctx and ctx.handle then ctx.handle.stop() end end,
+    teardown = function(_, state) if state and state.handle then state.handle.stop() end end,
     modes = {
         -- `build` splits the one `command` input into `program` and `args`.
         package = {
