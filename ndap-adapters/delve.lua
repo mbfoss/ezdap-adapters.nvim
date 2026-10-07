@@ -111,22 +111,12 @@ local _build_inputs = {
     goroutine_filters      = { type = "string", description = "filter expression limiting the goroutines listed" },
 }
 
----A mode's inputs: the always-accepted set plus whichever groups apply.
----@param ... table<string, ndap.Input>
----@return table<string, ndap.Input>
-local function _inputs(...)
-    local out = vim.deepcopy(_any_mode_inputs)
-    for _, group in ipairs({ ... }) do
-        out = vim.tbl_extend("error", out, vim.deepcopy(group))
-    end
-    return out
-end
-
 ---@param parameters table<string, any>
 ---@return table params
 local function _any_mode_body(parameters)
+    local shared = require("ndap.shared")
     local params = {}
-    params.dlvCwd = require("ndap.shared").normalize_path(parameters.dlv_cwd)
+    params.dlvCwd = shared.normalize_path(parameters.dlv_cwd)
     params.env    = parameters.env
     -- delve wants a list of {from, to} pairs, not a flat mapping.
     if parameters.substitute_path then
@@ -154,9 +144,10 @@ end
 ---@param parameters table<string, any>
 ---@return table params
 local function _build_body(parameters)
+    local shared = require("ndap.shared")
     local params = _process_body(parameters)
     params.buildFlags           = parameters.build_flags
-    params.output               = require("ndap.shared").normalize_path(parameters.output)
+    params.output               = shared.normalize_path(parameters.output)
     params.stopOnEntry          = parameters.stop_on_entry
     params.stackTraceDepth      = parameters.stack_trace_depth
     params.showGlobalVariables  = parameters.show_global_variables
@@ -177,7 +168,7 @@ return {
         package = {
             description = "build and debug a Go package/binary",
             request = "launch",
-            inputs = _inputs(_process_inputs, _build_inputs),
+            inputs = vim.tbl_extend("error", _any_mode_inputs, _process_inputs, _build_inputs),
             build = function(parameters)
                 local params = _build_body(parameters)
                 params.mode = "debug"
@@ -187,7 +178,7 @@ return {
         test = {
             description = "build and debug a Go test package",
             request = "launch",
-            inputs = _inputs(_process_inputs, _build_inputs),
+            inputs = vim.tbl_extend("error", _any_mode_inputs, _process_inputs, _build_inputs),
             build = function(parameters)
                 local params = _build_body(parameters)
                 params.mode = "test"
@@ -197,7 +188,7 @@ return {
         binary = {
             description = "debug a pre-built Go binary",
             request = "launch",
-            inputs = _inputs(_process_inputs),
+            inputs = vim.tbl_extend("error", _any_mode_inputs, _process_inputs),
             build = function(parameters)
                 local params = _process_body(parameters)
                 params.mode = "exec"
@@ -209,10 +200,10 @@ return {
         replay = {
             description = "replay an rr trace recording",
             request = "launch",
-            inputs = _inputs {
+            inputs = vim.tbl_extend("error", _any_mode_inputs, {
                 program        = { type = "string", completion = "file", required = true, description = "binary the trace was recorded from" },
                 trace_dir_path = { type = "string", completion = "dir", required = true, description = "rr trace directory to replay" },
-            },
+            }),
             build = function(parameters)
                 local shared = require("ndap.shared")
                 local params = _any_mode_body(parameters)
@@ -225,10 +216,10 @@ return {
         core = {
             description = "post-mortem debug from a core dump",
             request = "launch",
-            inputs = _inputs {
+            inputs = vim.tbl_extend("error", _any_mode_inputs, {
                 program       = { type = "string", completion = "file", required = true, description = "binary that produced the core" },
                 corefile_path = { type = "string", completion = "file", required = true, description = "core dump to load" },
-            },
+            }),
             build = function(parameters)
                 local shared = require("ndap.shared")
                 local params = _any_mode_body(parameters)
@@ -249,7 +240,8 @@ return {
                 backend = { type = "string", completion = { "default", "native", "lldb", "rr" }, description = "debugger backend" },
             },
             build = function(parameters)
-                local pid, err = require("ndap.shared").resolve_pid(parameters.pid)
+                local shared = require("ndap.shared")
+                local pid, err = shared.resolve_pid(parameters.pid)
                 if not pid then return nil, err end
                 return {
                     mode      = "local",

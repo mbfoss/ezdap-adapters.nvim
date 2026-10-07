@@ -90,7 +90,7 @@ return {
         local version = _gdb_version(exe) --[[@as integer[] ]]
         config.command = vim.list_extend({ exe }, gdb_args)
         -- A raw task names no mode, so it is on its own here: nothing to gate on.
-        if ctx.mode == "core" and _cmp(version, CORE_MIN) <= 0 then
+        if ctx.mode == "core" and _cmp(version, CORE_MIN) < 0 then
             return callback(("%s is gdb %s; core files need %s or newer")
                 :format(exe, _fmt(version), _fmt(CORE_MIN)))
         end
@@ -153,9 +153,10 @@ return {
                 ada_charset = { type = "string", description = "Ada source character set" },
             },
             build = function(parameters)
+                local shared = require("ndap.shared")
                 return {
                     target           = parameters.connection,
-                    program          = require("ndap.shared").normalize_path(parameters.program),
+                    program          = shared.normalize_path(parameters.program),
                     adaSourceCharset = parameters.ada_charset,
                 }
             end,

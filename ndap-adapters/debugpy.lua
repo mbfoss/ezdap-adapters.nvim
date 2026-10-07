@@ -5,9 +5,9 @@
 -- importable wins, so put your own interpreter's directory first to pin it.
 -- "$VAR" and "~" expand anywhere in an entry, as they do in `vim.fs.normalize`;
 -- an entry naming an unset or empty variable is skipped; a relative entry
--- resolves against the cwd. Mason is only
--- one of the entries, and the last of them: `pip install debugpy` into the
--- project's venv, or into the interpreter tried below, is enough on its own.
+-- resolves against the cwd. Mason is only one of the entries, and the last of
+-- them: `pip install debugpy` into the project's venv, or into the interpreter
+-- tried below, is enough on its own.
 local debugpy_venv_dirs = {
     "$DEBUGPY_VENV",
     "$VIRTUAL_ENV",
@@ -44,16 +44,9 @@ local function _has_debugpy(python)
     return vim.v.shell_error == 0
 end
 
----@return integer
-local function _free_port()
-    local tcp = assert(vim.uv.new_tcp(), "uv.new_tcp failed")
-    tcp:bind("127.0.0.1", 0)
-    local addr = assert(tcp:getsockname(), "getsockname failed")
-    tcp:close()
-    return addr.port
-end
-
 ---Spawn the local debugpy adapter on a free port and point the connection at it.
+---Nothing to wait for on its stdout: this adapter is told the port rather than
+---announcing one.
 ---@param config   ndap.dap.Config
 ---@param ctx      ndap.AdapterSetupCtx
 ---@param callback fun(err?: string, state?: any)
@@ -74,7 +67,7 @@ local function _debugpy_setup(config, ctx, callback)
                 table.concat(tried, ", ") .. ")")
         end
     end
-    local port   = _free_port()
+    local port   = shared.free_port()
     local called = false
     local function done(err, state)
         if called then return end
@@ -112,18 +105,12 @@ local _common_inputs = {
     log_to_file       = { type = "boolean", description = "log debugger events to a file" },
 }
 
----A mode's own inputs on top of the common set.
----@param extra table<string, ndap.Input>
----@return table<string, ndap.Input>
-local function _inputs(extra)
-    return vim.tbl_extend("error", vim.deepcopy(_common_inputs), extra)
-end
-
 ---Assign the common attributes, plus the `type` every debugpy body carries.
 ---`justMyCode`/`showReturnValue` keep ndap's defaults when left unset.
 ---@param parameters table<string, any>
 ---@return table params
 local function _common_body(parameters)
+    local shared = require("ndap.shared")
     local params = {}
     params.type            = "python"
     params.justMyCode      = parameters.just_my_code == nil and false or parameters.just_my_code
@@ -139,7 +126,10 @@ local function _common_body(parameters)
     if parameters.path_mappings then
         local mappings = {}
         for local_root, remote_root in pairs(parameters.path_mappings) do
-            mappings[#mappings + 1] = { localRoot = local_root, remoteRoot = remote_root }
+            -- The key is the local side of `local=remote`, the half that is a path
+            -- on this machine.
+            local key = shared.normalize_path(local_root)
+            mappings[#mappings + 1] = { localRoot = key, remoteRoot = remote_root }
         end
         params.pathMappings = mappings
     end
@@ -159,8 +149,9 @@ local _launch_inputs = {
 ---@param parameters table<string, any>
 ---@return table params
 local function _launch_body(parameters)
+    local shared = require("ndap.shared")
     local params = _common_body(parameters)
-    params.cwd         = require("ndap.shared").normalize_path(parameters.cwd)
+    params.cwd         = shared.normalize_path(parameters.cwd)
     params.env         = parameters.env
     params.python      = parameters.python
     params.console     = parameters.console
@@ -174,29 +165,30 @@ end
 ---@type ndap.AdapterDef
 return {
     setup    = _debugpy_setup,
-    teardown = function(_, state) if state then state.handle.stop() end end,
+    teardown = function(_, state) if state and state.handle then state.handle.stop() end end,
     modes = {
         -- One `command` input carries the whole command line; `build` splits it into
         -- `program` (the first word) and `args` (the rest).
         script = {
             description = "debug a Python file",
             request = "launch",
-            inputs = _inputs(vim.tbl_extend("error", vim.deepcopy(_launch_inputs), {
+            inputs = vim.tbl_extend("error", _common_inputs, _launch_inputs, {
                 command = { type = "string", completion = "command", required = true, description = "command line to debug" },
-            })),
+            }),
             build = function(parameters)
+                local shared = require("ndap.shared")
                 local params = _launch_body(parameters)
-                params.program, params.args = require("ndap.shared").split_command(parameters.command)
+                params.program, params.args = shared.split_command(parameters.command)
                 return params
             end,
         },
         module = {
             description = "debug a module, as `python -m`",
             request = "launch",
-            inputs = _inputs(vim.tbl_extend("error", vim.deepcopy(_launch_inputs), {
+            inputs = vim.tbl_extend("error", _common_inputs, _launch_inputs, {
                 module = { type = "string", required = true, description = "module name to debug" },
                 args   = { type = "list", description = "command line arguments passed to the module" },
-            })),
+            }),
             build = function(parameters)
                 local params = _launch_body(parameters)
                 params.module = parameters.module
@@ -207,10 +199,10 @@ return {
         code = {
             description = "debug a snippet of Python source, as `python -c`",
             request = "launch",
-            inputs = _inputs(vim.tbl_extend("error", vim.deepcopy(_launch_inputs), {
+            inputs = vim.tbl_extend("error", _common_inputs, _launch_inputs, {
                 code = { type = "string", required = true, description = "Python code to debug" },
                 args = { type = "list", description = "command line arguments passed to the code" },
-            })),
+            }),
             build = function(parameters)
                 local params = _launch_body(parameters)
                 params.code = parameters.code
@@ -221,11 +213,12 @@ return {
         attach = {
             description = "attach to a running process by pid",
             request = "attach",
-            inputs = _inputs {
+            inputs = vim.tbl_extend("error", _common_inputs, {
                 pid = { type = "integer", description = "process id to attach to" },
-            },
+            }),
             build = function(parameters)
-                local pid, err = require("ndap.shared").resolve_pid(parameters.pid)
+                local shared = require("ndap.shared")
+                local pid, err = shared.resolve_pid(parameters.pid)
                 if not pid then return nil, err end
                 local params = _common_body(parameters)
                 params.processId = pid
@@ -235,12 +228,13 @@ return {
         remote = {
             description = "attach to a remote debugpy process over host/port",
             request = "attach",
-            inputs = _inputs {
+            inputs = vim.tbl_extend("error", _common_inputs, {
                 host = { type = "string", required = true, description = "remote debugpy host" },
                 port = { type = "integer", required = true, description = "remote debugpy port" },
-            },
+            }),
             build = function(parameters)
-                local port, err = require("ndap.shared").resolve_port(parameters.port)
+                local shared = require("ndap.shared")
+                local port, err = shared.resolve_port(parameters.port)
                 if err then return nil, err end
                 local params = _common_body(parameters)
                 params.connect = { host = parameters.host, port = port }
@@ -252,12 +246,13 @@ return {
         listen = {
             description = "wait for a debugpy process to connect back on host/port",
             request = "attach",
-            inputs = _inputs {
+            inputs = vim.tbl_extend("error", _common_inputs, {
                 host = { type = "string", description = "host to listen on" },
                 port = { type = "integer", required = true, description = "port to listen on" },
-            },
+            }),
             build = function(parameters)
-                local port, err = require("ndap.shared").resolve_port(parameters.port)
+                local shared = require("ndap.shared")
+                local port, err = shared.resolve_port(parameters.port)
                 if err then return nil, err end
                 local params = _common_body(parameters)
                 params.listen = { host = parameters.host or "127.0.0.1", port = port }

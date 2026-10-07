@@ -27,15 +27,6 @@ local rdbg_host = "127.0.0.1"
 -- bundler in a large project is not always quick.
 local rdbg_start_timeout_ms = 10000
 
----@return integer
-local function _free_port()
-    local tcp = assert(vim.uv.new_tcp(), "uv.new_tcp failed")
-    tcp:bind("127.0.0.1", 0)
-    local addr = assert(tcp:getsockname(), "getsockname failed")
-    tcp:close()
-    return addr.port
-end
-
 ---The first candidate that is executable.
 ---@return string? rdbg, string[] tried
 local function _resolve_rdbg()
@@ -60,7 +51,7 @@ local function _spawn_rdbg(parameters, command_mode, config, ctx, callback)
     -- `bundle exec` so the debuggee runs under the project's own bundle, which is
     -- also the only way the gem is loadable when it is a Gemfile dependency.
     local cmd = parameters.use_bundler and { "bundle", "exec", rdbg } or { rdbg }
-    vim.list_extend(cmd, { "--open", "--host", rdbg_host, "--port", tostring(_free_port()) })
+    vim.list_extend(cmd, { "--open", "--host", rdbg_host, "--port", tostring(shared.free_port()) })
     -- Command mode: the target is a program on $PATH (rspec, rake, ruby itself)
     -- rather than a Ruby script rdbg loads.
     if command_mode then table.insert(cmd, "--command") end
@@ -126,25 +117,15 @@ local _common_inputs = {
     stop_on_entry = { type = "boolean", description = "stay stopped where rdbg loaded the program, instead of continuing" },
 }
 
----Fields the two spawning modes share, on top of the common set.
+---Fields the two spawning modes share, on top of the common set. `env` reaches the
+---debuggee through rdbg, which starts it.
 ---@type table<string, ndap.Input>
 local _spawn_inputs = {
     cwd         = { type = "string", completion = "dir", description = "working directory" },
-    env         = { type = "map", description = "environment variables" },
+    env         = { type = "map", description = "environment variables the debuggee is started with" },
     use_bundler = { type = "boolean", description = "run under `bundle exec`" },
     rdbg_args   = { type = "list", description = "extra flags for rdbg itself, e.g. --session-name=api" },
 }
-
----A mode's inputs: the always-accepted set plus whichever groups apply.
----@param ... table<string, ndap.Input>
----@return table<string, ndap.Input>
-local function _inputs(...)
-    local out = vim.deepcopy(_common_inputs)
-    for _, group in ipairs({ ... }) do
-        out = vim.tbl_extend("error", out, vim.deepcopy(group))
-    end
-    return out
-end
 
 ---@param parameters table<string, any>
 ---@return table params
@@ -172,7 +153,7 @@ local _modes = {
     script = {
         description = "debug a Ruby script",
         request = "attach",
-        inputs = _inputs(_spawn_inputs, {
+        inputs = vim.tbl_extend("error", _common_inputs, _spawn_inputs, {
             command = { type = "string", completion = "command", required = true, description = "Ruby script to debug, plus its arguments" },
         }),
         build = _spawn_body,
@@ -183,7 +164,7 @@ local _modes = {
     command = {
         description = "debug a Ruby command - rspec, rake, ruby itself",
         request = "attach",
-        inputs = _inputs(_spawn_inputs, {
+        inputs = vim.tbl_extend("error", _common_inputs, _spawn_inputs, {
             command = { type = "string", completion = "command", required = true, description = "command to debug, plus its arguments" },
         }),
         build = _spawn_body,
@@ -195,12 +176,12 @@ local _modes = {
     remote = {
         description = "attach to an rdbg server already listening on host/port",
         request = "attach",
-        inputs = _inputs {
+        inputs = vim.tbl_extend("error", _common_inputs, {
             host          = { type = "string", description = "rdbg server host (default 127.0.0.1)" },
             port          = { type = "integer", required = true, description = "rdbg server port" },
             local_fs      = { type = "boolean", description = "the debuggee shares this filesystem (default true)" },
             path_mappings = { type = "map", completion = "dir", description = "source path mappings, remote=local" },
-        },
+        }),
         build = function(parameters)
             local shared = require("ndap.shared")
             local port, err = shared.resolve_port(parameters.port)

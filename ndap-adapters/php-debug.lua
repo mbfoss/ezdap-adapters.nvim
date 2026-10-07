@@ -2,16 +2,16 @@
 -- Fields follow the `php` configurationAttributes in that extension's
 -- package.json. Upstream declares a `launch` request only, and no `attach`: the
 -- adapter never dials the debuggee, it *listens* for Xdebug to connect back to
--- it, so the bodiless `listen` mode is a launch request too.
+-- it, so `listen` is a launch request too.
 
 -- Where to look for the adapter's js entry point, in order; the first readable
 -- one wins. Put your own file first to pin it. "$VAR" and "~" expand anywhere in
 -- an entry, as they do in `vim.fs.normalize`; an entry naming an unset or empty
--- variable is skipped.
--- Mason is only one of the entries and not required - unpack the .vsix anywhere
--- and point $PHP_DEBUG_HOME at it, either at the extension root or at the
--- directory above it. Entries are literal paths, so a VS Code install, which
--- carries a version suffix, needs that directory named here.
+-- variable is skipped. Mason is only one of the entries and not required -
+-- unpack the .vsix anywhere and point $PHP_DEBUG_HOME at it, either at the
+-- extension root or at the directory above it. Entries are literal paths, so a
+-- VS Code install, which carries a version suffix, needs that directory named
+-- here.
 local php_debug_jss = {
     "$PHP_DEBUG_HOME/out/phpDebug.js",
     "$PHP_DEBUG_HOME/extension/out/phpDebug.js",
@@ -45,13 +45,6 @@ local _common_inputs = {
     xdebug_cloud_token = { type = "string", description = "Xdebug Cloud token, used instead of a local port" },
     log                = { type = "boolean", description = "log the DAP/DBGP conversation to the debug console" },
 }
-
----A mode's own inputs on top of the common set.
----@param extra table<string, ndap.Input>
----@return table<string, ndap.Input>
-local function _inputs(extra)
-    return vim.tbl_extend("error", vim.deepcopy(_common_inputs), extra)
-end
 
 ---Both ports are held to their range here, so every mode's `build` reports a bad
 ---one the same way - the `nil, err` pair an abort returns.
@@ -103,7 +96,7 @@ local _modes = {
     listen = {
         description = "wait for Xdebug to connect back on a port",
         request = "launch",
-        inputs = _inputs {},
+        inputs = _common_inputs,
         build = function(parameters)
             local params, err = _common_body(parameters)
             if not params then return nil, err end
@@ -114,11 +107,11 @@ local _modes = {
     -- `program` (the first word) and `args` (the rest). The php binary is not part
     -- of it - `command` starts at the script, and `runtime_executable` names php.
     -- Xdebug still has to be told to start a session for this run, which is what
-    -- `runtime_args` is for; without it the script runs to completion undapged.
+    -- `runtime_args` is for; without it the script runs to completion undebugged.
     script = {
         description = "run a PHP script under Xdebug",
         request = "launch",
-        inputs = _inputs {
+        inputs = vim.tbl_extend("error", _common_inputs, {
             command            = { type = "string", completion = "command", required = true, description = "script to debug, plus its arguments" },
             cwd                = { type = "string", completion = "dir", description = "working directory" },
             env                = { type = "map", description = "environment variables" },
@@ -126,7 +119,7 @@ local _modes = {
             runtime_executable = { type = "string", description = "php binary to run the script with (default php)" },
             runtime_args       = { type = "list", description = "arguments passed to php, e.g. -dxdebug.mode=debug,-dxdebug.start_with_request=yes" },
             console            = { type = "string", completion = { "internalConsole", "integratedTerminal", "externalTerminal" }, description = "where the debuggee's stdio goes" },
-        },
+        }),
         build = function(parameters)
             local shared = require("ndap.shared")
             local params, err = _common_body(parameters)

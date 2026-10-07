@@ -34,7 +34,8 @@ local dap_subcommand = "debug_adapter"
 
 ---Which tool each mode's adapter comes from, and whether it is the test
 ---variant. A mode is the only thing that decides this: the four adapters are
----separate programs, not options on one body.
+---separate programs, not options on one body. Every mode in `_modes` has to be
+---named here; the check below the mode table enforces it.
 ---@type table<string, { flutter?: boolean, test?: boolean }>
 local _tool_of = {
     script         = {},
@@ -80,17 +81,6 @@ local _attach_inputs = {
     vm_service_info_file = { type = "string", completion = "file", description = "file to read the VM Service uri from" },
 }
 
----A mode's inputs: the always-accepted set plus whichever groups apply.
----@param ... table<string, ndap.Input>
----@return table<string, ndap.Input>
-local function _inputs(...)
-    local out = vim.deepcopy(_common_inputs)
-    for _, group in ipairs({ ... }) do
-        out = vim.tbl_extend("error", out, vim.deepcopy(group))
-    end
-    return out
-end
-
 ---@param parameters table<string, any>
 ---@return table params
 local function _common_body(parameters)
@@ -111,9 +101,10 @@ end
 ---@param parameters table<string, any>
 ---@return table params
 local function _tool_body(parameters)
+    local shared = require("ndap.shared")
     local params = _common_body(parameters)
     params.toolArgs               = parameters.tool_args
-    params.customTool             = require("ndap.shared").normalize_path(parameters.custom_tool)
+    params.customTool             = shared.normalize_path(parameters.custom_tool)
     params.customToolReplacesArgs = parameters.custom_tool_replaces_args
     return params
 end
@@ -126,9 +117,10 @@ end
 ---@param parameters table<string, any>
 ---@return table params
 local function _launch_body(parameters)
+    local shared = require("ndap.shared")
     local params = _tool_body(parameters)
     if parameters.command then
-        params.program, params.args = require("ndap.shared").split_command(parameters.command)
+        params.program, params.args = shared.split_command(parameters.command)
     end
     params.noDebug = parameters.no_debug
     return params
@@ -142,7 +134,7 @@ local _modes = {
     script = {
         description = "debug a Dart program",
         request = "launch",
-        inputs = _inputs(_tool_inputs, {
+        inputs = vim.tbl_extend("error", _common_inputs, _tool_inputs, {
             command            = { type = "string", completion = "command", required = true, description = "Dart entry point to debug, plus its arguments" },
             no_debug           = { type = "boolean", description = "run the program without debugging it" },
             vm_additional_args = { type = "list", description = "arguments passed straight to the Dart VM, before the tool's own" },
@@ -150,7 +142,8 @@ local _modes = {
             console            = { type = "string", completion = { "internalConsole", "terminal", "externalTerminal" }, description = "where the debuggee runs; a terminal is what gives it stdin" },
         }),
         build = function(parameters)
-            local port, err = require("ndap.shared").resolve_port(parameters.vm_service_port)
+            local shared = require("ndap.shared")
+            local port, err = shared.resolve_port(parameters.vm_service_port)
             if err then return nil, err end
             local params = _launch_body(parameters)
             params.vmAdditionalArgs = parameters.vm_additional_args
@@ -164,7 +157,7 @@ local _modes = {
     test = {
         description = "debug a Dart test suite",
         request = "launch",
-        inputs = _inputs(_tool_inputs, {
+        inputs = vim.tbl_extend("error", _common_inputs, _tool_inputs, {
             command            = { type = "string", completion = "command", required = true, description = "test file to debug, plus its arguments" },
             no_debug           = { type = "boolean", description = "run the tests without debugging them" },
             vm_additional_args = { type = "list", description = "arguments passed straight to the Dart VM, before the tool's own" },
@@ -183,11 +176,12 @@ local _modes = {
     attach = {
         description = "attach to a running Dart VM Service",
         request = "attach",
-        inputs = _inputs(_attach_inputs),
+        inputs = vim.tbl_extend("error", _common_inputs, _attach_inputs),
         build = function(parameters)
+            local shared = require("ndap.shared")
             local params = _common_body(parameters)
             params.vmServiceUri      = parameters.vm_service_uri
-            params.vmServiceInfoFile = require("ndap.shared").normalize_path(parameters.vm_service_info_file)
+            params.vmServiceInfoFile = shared.normalize_path(parameters.vm_service_info_file)
             return params
         end,
     },
@@ -197,33 +191,27 @@ local _modes = {
     flutter = {
         description = "debug a Flutter app on a device",
         request = "launch",
-        inputs = _inputs(_tool_inputs, {
+        inputs = vim.tbl_extend("error", _common_inputs, _tool_inputs, {
             command  = { type = "string", completion = "command", required = false, description = "entry point to debug, plus its arguments (default: the project's own)" },
             no_debug = { type = "boolean", description = "run the app without debugging it" },
         }),
-        build = function(parameters)
-            local params = _launch_body(parameters)
-            return params
-        end,
+        build = _launch_body,
     },
     flutter_test = {
         description = "debug a Flutter test suite",
         request = "launch",
-        inputs = _inputs(_tool_inputs, {
+        inputs = vim.tbl_extend("error", _common_inputs, _tool_inputs, {
             command  = { type = "string", completion = "command", required = false, description = "test file to debug, plus its arguments (default: every test)" },
             no_debug = { type = "boolean", description = "run the tests without debugging them" },
         }),
-        build = function(parameters)
-            local params = _launch_body(parameters)
-            return params
-        end,
+        build = _launch_body,
     },
     -- Attaching to a Flutter app already running on a device: the flutter tool
     -- finds it when given neither uri nor file, which is why both are optional.
     flutter_attach = {
         description = "attach to a running Flutter app",
         request = "attach",
-        inputs = _inputs(_tool_inputs, _attach_inputs, {
+        inputs = vim.tbl_extend("error", _common_inputs, _tool_inputs, _attach_inputs, {
             program = { type = "string", completion = "file", description = "entry point of the running app, for resolving its sources" },
         }),
         build = function(parameters)
@@ -236,6 +224,12 @@ local _modes = {
         end,
     },
 }
+
+-- A mode named in `_modes` but not in `_tool_of` would start nothing, and say so
+-- only as "nothing says how to reach the adapter".
+for name in pairs(_modes) do
+    assert(_tool_of[name], ("dart: mode %s has no tool in _tool_of"):format(name))
+end
 
 ---@type ndap.AdapterDef
 return {

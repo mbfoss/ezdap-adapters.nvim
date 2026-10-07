@@ -1,15 +1,14 @@
 -- lldb-dap - LLVM's native DAP adapter. The launch/attach parameters mirror the
 -- LLDB docs (https://lldb.llvm.org/use/lldbdap.html).
 
--- Where to look for lldb-dap, in order; the config's lldb-dap is tried first,
--- then these, and the first executable wins. Put your own path first to pin it.
--- "$VAR" and "~" expand anywhere in an entry, as they do in `vim.fs.normalize`;
--- an entry naming an unset or empty variable is skipped. A bare name (no
--- separator) is looked up on $PATH, which
--- is where every install is picked up from: a versioned LLVM ("lldb-dap-21",
--- added here), a package manager's prefix, or Xcode's toolchain, whose bin
--- directory `xcode-select -p` names and which `xcrun lldb-dap` runs without
--- $PATH at all.
+-- Where to look for lldb-dap, in order; the first executable wins. Put your own
+-- path first to pin it. "$VAR" and "~" expand anywhere in an entry, as they do in
+-- `vim.fs.normalize`; an entry naming an unset or empty variable is skipped. A
+-- bare name (no separator) is looked up on $PATH, which is where a package
+-- manager's install or Xcode's toolchain is picked up from - Xcode's bin
+-- directory, the one `xcode-select -p` names, is on $PATH only in a developer
+-- shell, so `xcrun lldb-dap` may be the only way to reach it. An LLVM that
+-- suffixes the binary ("lldb-dap-21") is not named that on $PATH: name it here.
 local lldb_dap_bins = { "lldb-dap" }
 
 ---@type ndap.AdapterDef

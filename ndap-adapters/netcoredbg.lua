@@ -5,15 +5,14 @@
 -- `processId`. netcoredbg spells entry-stop `stopAtEntry`, not the standard
 -- `stopOnEntry`, and has no runInTerminal/console argument.
 
--- Where to look for netcoredbg, in order; the config's netcoredbg is tried
--- first, then these, and the first executable wins. Put your own path first to
--- pin it. "$VAR" and "~" expand anywhere in an entry, as they do in
--- `vim.fs.normalize`; an entry naming an unset or empty variable is skipped. A
--- bare name (no separator) is looked up on $PATH, which is where an unpacked
--- release is picked up from: put its directory
--- on $PATH, or list the binary here first. Mason ships a shim in its `bin`, which
--- is on $PATH only when mason.nvim was set up to put it there, so the binary
--- inside the package is listed too; mason itself is not required.
+-- Where to look for netcoredbg, in order; the first executable wins. Put your
+-- own path first to pin it. "$VAR" and "~" expand anywhere in an entry, as they
+-- do in `vim.fs.normalize`; an entry naming an unset or empty variable is
+-- skipped. A bare name (no separator) is looked up on $PATH, which is where an
+-- unpacked release is picked up from: put its directory on $PATH, or list the
+-- binary here first. Mason ships a shim in its `bin`, which is on $PATH only
+-- when mason.nvim was set up to put it there, so the binary inside the package
+-- is listed too; mason itself is not required.
 local netcoredbg_bins = {
     "netcoredbg",
     vim.fs.joinpath(vim.fn.stdpath("data"), "mason", "bin", "netcoredbg"),
@@ -78,7 +77,8 @@ return {
                 pid = { type = "integer", description = "process id to attach to" },
             },
             build = function(parameters)
-                local pid, err = require("ndap.shared").resolve_pid(parameters.pid)
+                local shared = require("ndap.shared")
+                local pid, err = shared.resolve_pid(parameters.pid)
                 if not pid then return nil, err end
                 return {
                     processId = pid,

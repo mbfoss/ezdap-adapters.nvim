@@ -41,17 +41,6 @@ local _node_inputs = {
     auto_attach_child_processes = { type = "boolean", description = "attach to child processes automatically" },
 }
 
----A mode's inputs: the source-resolution set plus whichever groups apply.
----@param ... table<string, ndap.Input>
----@return table<string, ndap.Input>
-local function _inputs(...)
-    local out = vim.deepcopy(_source_inputs)
-    for _, group in ipairs({ ... }) do
-        out = vim.tbl_extend("error", out, vim.deepcopy(group))
-    end
-    return out
-end
-
 ---@param parameters table<string, any>
 ---@return table params
 local function _source_body(parameters)
@@ -87,7 +76,7 @@ local _modes = {
     script = {
         description = "debug a Node.js/JS/TS file",
         request = "launch",
-        inputs = _inputs(_node_inputs, {
+        inputs = vim.tbl_extend("error", _source_inputs, _node_inputs, {
             command            = { type = "string", completion = "command", required = true, description = "script to debug, plus its arguments" },
             runtime_executable = { type = "string", description = "runtime to run the script with (default node)" },
             runtime_args       = { type = "list", description = "arguments passed to the runtime, before the program" },
@@ -95,8 +84,9 @@ local _modes = {
             console            = { type = "string", completion = { "internalConsole", "integratedTerminal", "externalTerminal" }, description = "where to run the debuggee" },
         }),
         build = function(parameters)
+            local shared = require("ndap.shared")
             local params = _node_body(parameters)
-            params.program, params.args = require("ndap.shared").split_command(parameters.command)
+            params.program, params.args = shared.split_command(parameters.command)
             params.runtimeExecutable = parameters.runtime_executable
             params.runtimeArgs       = parameters.runtime_args
             params.stopOnEntry       = parameters.stop_on_entry
@@ -109,13 +99,14 @@ local _modes = {
     attach = {
         description = "attach to a running process by pid",
         request = "attach",
-        inputs = _inputs(_node_inputs, {
+        inputs = vim.tbl_extend("error", _source_inputs, _node_inputs, {
             pid                      = { type = "integer", description = "process id to attach to" },
             attach_existing_children = { type = "boolean", description = "also attach to already-spawned child processes" },
             continue_on_attach       = { type = "boolean", description = "resume a program waiting on --inspect-brk" },
         }),
         build = function(parameters)
-            local pid, err = require("ndap.shared").resolve_pid(parameters.pid)
+            local shared = require("ndap.shared")
+            local pid, err = shared.resolve_pid(parameters.pid)
             if not pid then return nil, err end
             local params = _node_body(parameters)
             params.processId              = pid
@@ -128,7 +119,7 @@ local _modes = {
     remote = {
         description = "attach to a remote Node.js process over host/port",
         request = "attach",
-        inputs = _inputs(_node_inputs, {
+        inputs = vim.tbl_extend("error", _source_inputs, _node_inputs, {
             host                     = { type = "string", description = "remote Node.js host" },
             port                     = { type = "integer", description = "remote Node.js debug port (default 9229)" },
             local_root               = { type = "string", completion = "dir", description = "local directory containing the program" },
@@ -155,14 +146,14 @@ local _modes = {
     browser = {
         description = "launch a Chromium browser and debug a page",
         request = "launch",
-        inputs = _inputs {
+        inputs = vim.tbl_extend("error", _source_inputs, {
             url                = { type = "string", required = true, description = "url to open and attach to" },
             web_root           = { type = "string", completion = "dir", description = "absolute path to the webserver root" },
             path_mapping       = { type = "map", completion = "dir", description = "url-to-local-folder mappings, from=to" },
             user_data_dir      = { type = "string", completion = "dir", description = "browser user-data directory (default: a throwaway one)" },
             runtime_executable = { type = "string", description = "'stable', 'canary', or a path to the browser executable" },
             runtime_args       = { type = "list", description = "arguments passed to the browser" },
-        },
+        }),
         build = function(parameters)
             local shared = require("ndap.shared")
             local params = _source_body(parameters)
@@ -237,9 +228,7 @@ return {
         end, 5000)
     end,
 
-    teardown = function(_, state)
-        if state then state.handle.stop() end
-    end,
+    teardown = function(_, state) if state and state.handle then state.handle.stop() end end,
 
     modes = _modes,
 }

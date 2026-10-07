@@ -3,16 +3,14 @@
 -- (https://github.com/vadimcn/codelldb/blob/master/MANUAL.md). `type` is always
 -- "lldb"; `name` is a display label.
 
--- Where to look for the adapter binary, in order; the config's codelldb is tried
--- first, then these, and the first executable wins. Put your own path first to
--- pin it. "$VAR" and "~" expand anywhere in an entry, as they do in
--- `vim.fs.normalize`; an entry naming an unset or empty variable is skipped. A
--- bare name (no separator) is looked up on
--- $PATH, which is where an unpacked release or a distro package is picked up
--- from: put its adapter directory on $PATH, or list the binary here first. Mason
--- ships a shim in its `bin`,
--- which is on $PATH only when mason.nvim was set up to put it there, so the
--- binary inside the package is listed too; mason itself is not required.
+-- Where to look for the adapter binary, in order; the first executable wins. Put
+-- your own path first to pin it. "$VAR" and "~" expand anywhere in an entry, as
+-- they do in `vim.fs.normalize`; an entry naming an unset or empty variable is
+-- skipped. A bare name (no separator) is looked up on $PATH, which is where an
+-- unpacked release or a distro package is picked up from: put its adapter
+-- directory on $PATH, or list the binary here first. Mason ships a shim in its
+-- `bin`, which is on $PATH only when mason.nvim was set up to put it there, so
+-- the binary inside the package is listed too; mason itself is not required.
 local codelldb_bins = {
     "codelldb",
 }
@@ -39,14 +37,8 @@ local _common_inputs = {
 ---@param path string
 ---@return string
 local function _quoted(path)
-    return '"' .. require("ndap.shared").normalize_path(path) .. '"'
-end
-
----A mode's own inputs on top of the common set.
----@param extra table<string, ndap.Input>
----@return table<string, ndap.Input>
-local function _inputs(extra)
-    return vim.tbl_extend("error", vim.deepcopy(_common_inputs), extra)
+    local shared = require("ndap.shared")
+    return '"' .. shared.normalize_path(path) .. '"'
 end
 
 ---Assign the common attributes, plus the `name`/`type` every codelldb body carries.
@@ -89,7 +81,7 @@ return {
         binary = {
             description = "debug an executable",
             request = "launch",
-            inputs = _inputs {
+            inputs = vim.tbl_extend("error", _common_inputs, {
                 command       = { type = "string", completion = "command", required = true, description = "command line to debug" },
                 cwd           = { type = "string", completion = "dir", description = "working directory" },
                 env           = { type = "map", description = "environment variables, added to the inherited ones" },
@@ -97,7 +89,7 @@ return {
                 stdio         = { type = "list", description = "redirections for stdin, stdout, stderr, in that order" },
                 terminal      = { type = "string", completion = { "console", "integrated", "external" }, description = "where the debuggee's stdio goes" },
                 stop_on_entry = { type = "boolean", description = "break at program entry" },
-            },
+            }),
             build = function(parameters)
                 local shared = require("ndap.shared")
                 local params = _common_body(parameters)
@@ -114,11 +106,11 @@ return {
         attach = {
             description = "attach to a running process by pid",
             request = "attach",
-            inputs = _inputs {
+            inputs = vim.tbl_extend("error", _common_inputs, {
                 pid           = { type = "integer", description = "process id to attach to" },
                 program       = { type = "string", completion = "file", description = "executable to read symbols from" },
                 stop_on_entry = { type = "boolean", description = "break immediately after attaching" },
-            },
+            }),
             build = function(parameters)
                 local shared = require("ndap.shared")
                 local pid, err = shared.resolve_pid(parameters.pid)
@@ -133,14 +125,15 @@ return {
         process_name = {
             description = "attach to a process by executable, optionally waiting for it to launch",
             request = "attach",
-            inputs = _inputs {
+            inputs = vim.tbl_extend("error", _common_inputs, {
                 program       = { type = "string", completion = "file", required = true, description = "executable to attach to" },
                 wait_for      = { type = "boolean", description = "wait for the process to launch" },
                 stop_on_entry = { type = "boolean", description = "break immediately after attaching" },
-            },
+            }),
             build = function(parameters)
+                local shared = require("ndap.shared")
                 local params = _common_body(parameters)
-                params.program     = require("ndap.shared").normalize_path(parameters.program)
+                params.program     = shared.normalize_path(parameters.program)
                 params.waitFor     = parameters.wait_for
                 params.stopOnEntry = parameters.stop_on_entry
                 return params
@@ -154,10 +147,10 @@ return {
         core = {
             description = "post-mortem debug from a core file (custom launch)",
             request = "launch",
-            inputs = _inputs {
+            inputs = vim.tbl_extend("error", _common_inputs, {
                 program  = { type = "string", completion = "file", description = "executable that produced the core (read from the core when unset)" },
                 corefile = { type = "string", completion = "file", required = true, description = "core file to load" },
-            },
+            }),
             build = function(parameters)
                 local params = _common_body(parameters)
                 local target = parameters.program and ("target create %s --core %s")
@@ -171,16 +164,17 @@ return {
         gdb_remote = {
             description = "attach over a gdb-remote (gdbserver) connection (custom launch)",
             request = "launch",
-            inputs = _inputs {
+            inputs = vim.tbl_extend("error", _common_inputs, {
                 program = { type = "string", completion = "file", description = "executable for symbols" },
                 host    = { type = "string", required = true, description = "gdbserver host" },
                 port    = { type = "integer", required = true, description = "gdbserver port" },
-            },
+            }),
             -- `host`/`port` are required for the same reason `core` always writes a
             -- `processCreateCommands`: without one codelldb runs `process launch` and
             -- debugs the program locally instead of the remote.
             build = function(parameters)
-                local port, err = require("ndap.shared").resolve_port(parameters.port)
+                local shared = require("ndap.shared")
+                local port, err = shared.resolve_port(parameters.port)
                 if err then return nil, err end
                 local params = _common_body(parameters)
                 if parameters.program then
